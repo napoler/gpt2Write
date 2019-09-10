@@ -26,7 +26,7 @@ def is_default_file_type():
 
 def load():
     #根据文件编码类型，选择相应编码
-    with open("data/corpus_mini.txt", 'r', encoding='utf-8') as f:
+    with open("data/train.txt", 'r', encoding='utf-8') as f:
       print('reading lines')
       lines = f.readlines();
       lines = [line.replace('\n', ' [SEP] ') for line in lines]  # 用[SEP]表示换行, 段落之间使用SEP表示段落结束
@@ -41,4 +41,4 @@ with open('data/train.json', 'w', encoding='utf-8') as json_file:
 
     json.dump(a, json_file, ensure_ascii=False)
     print("write json file success!")
-    
+

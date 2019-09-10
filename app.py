@@ -40,7 +40,7 @@ def json_predict():
     # previous_line=request.args.get('sentence')
     text = data['text']
     text_array={'original':text,
-    'items':ai(text)
+    'items':ai(text,150)
     }
     
  
