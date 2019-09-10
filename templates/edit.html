@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="utf-8" />
+        <title>Simple example - Editor.md examples</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+        <link rel="stylesheet" href="/static/css/editormd.css" />
+        <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
+        <style>
+        div#plist {
+            /* 预测列表样式 */
+    position: absolute;
+
+    z-index: 9999;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-left: 6px solid #080;
+    font-size: 1.2em;
+    color: #333;
+}
+div#plist li {
+    list-style: none;
+    padding: 5px;
+    border-bottom: 1px dotted #ccc;
+    min-width: 150px;
+    text-align: left;
+    cursor:pointer
+}
+div#plist li:nth-child(even){
+    background:#f9f7f7
+}
+div#plist li:hover{
+
+    background: #7e7;
+    color: #fff;
+}
+
+
+
+        </style>
+    </head>
+    <body>
+        <div id="layout">
+            <header>
+                <h1>Ai edit</h1>
+            </header>
+            <div id="test-editormd">
+                <textarea style="display:none;">
+按下Tab键获取人工智能建议
+#### 这里写内容
+
+
+</textarea>
+            </div>
+        </div>
+        <script src="/static/js/jquery.min.js"></script>
+        <script src="/static/editor.md/editormd.min.js"></script>
+        <script type="text/javascript">
+			var testEditor;
+
+            $(function() {
+
+
+                TEditormd = editormd("test-editormd", {
+                    width   : "90%",
+                    height  : 640,
+                    syncScrolling : "single",
+                    path    : "/static/editor.md/lib/",
+                    disabledKeyMaps : [
+        "Ctrl-B", "F11", "F10"  // disable some default keyboard shortcuts handle
+    ],
+    onload : function() {
+        var keyMap = {
+            "Ctrl-S": function(cm) {
+                alert("Ctrl+S");
+            },
+            "Tab": function(cm) {
+                // alert("tabsssss");
+                console.log("点击tab!")
+                tab()
+            },
+            // "Ctrl-A": function(cm) { // default Ctrl-A selectAll
+            //     // custom
+            //     alert("Ctrl+A");
+            //     cm.execCommand("selectAll");
+            // }
+        };
+
+        // setting signle key
+        var keyMap2 = {
+              "Ctrl-T": function(cm) {
+                alert("Ctrl+T");
+              }
+        };
+
+        this.addKeyMap(keyMap);
+        this.addKeyMap(keyMap2);
+        this.removeKeyMap(keyMap2);  // remove signle key
+    }
+                });
+                
+                /*
+                // or
+                testEditor = editormd({
+                    id      : "test-editormd",
+                    width   : "90%",
+                    height  : 640,
+                    path    : "../lib/"
+                });
+                */
+
+                $( "body" ).click(function() {
+//   alert( "Handler for .click() called." );
+  $("#plist").hide();
+});
+
+
+                function tab(){
+                console.log("执行tab函数!")
+                var getCursor = TEditormd.getCursor()
+                // plist()
+
+                // console.log("坐标",getSelectionCoords())
+                // console.log("获取当前位置getCursor =>", getCursor);
+                // console.log("获取当前位置getCursor =>", getCursor.ch);
+                // console.log("获取当前位置getCursor =>", getCursor.line);
+                var now_ch =getCursor.ch;
+                var now_line =getCursor.line;
+                // TEditormd.setSelection({line:now_line-1, ch:10}, {line:now_line, ch:now_ch});
+                console.log("getSelection =>", TEditormd.setSelection({line:now_line, ch:0}, {line:now_line, ch:now_ch}));
+                console.log("获取的内容getSelection =>", TEditormd.getSelection());
+                text = TEditormd.getSelection()
+                getplist(text)
+                // TEditormd.focus();
+
+                // TEditormd.setCursor({line:1, ch:2});
+                // TEditormd.replaceSelection("$$$$$$$$$");
+                // TEditormd.focus();
+
+                // http://editor.md.ipandao.com/examples/set-get-replace-selection.html
+            }
+
+            function getplist(text){
+            //    var text = '测试狗子'
+            $.post("/json/predict", { 'text': text+""})
+                    .done(function (data) {
+ 
+                        console.log(data.items)
+                        plist(data.items) 
+ 
+
+                    }); 
+            }
+
+            function plist(items) {
+                // 获取坐标
+                var coordinate =getSelectionCoords()
+                // $('body').append('<div id="plist">添加的内容</div>')
+                var listhtml="<ul>"
+                $.each(items,function(index,value){
+    //  alert(i+"..."+value);
+    listhtml=listhtml+"<li>"+value+"</li>"
+});
+listhtml=listhtml+"</ul>"
+            //     var listhtml=`
+            //   <ul><li class=''>1111</li>
+                
+            //     <li class=''>1111</li>
+            //     <li class=''>1111</li>
+            //     <li class=''>1111</li>
+            //     </ul>  
+            //     `
+                $("#plist").html(listhtml).show().css({"left":  coordinate.x+10+"px","top":coordinate.y+20+"px"})
+                
+            }
+
+                function getSelectionCoords(win) {
+                    // 获取光标坐标
+        win = win || window;
+        var doc = win.document;
+        var sel = doc.selection, range, rects, rect;
+        var x = 0, y = 0;
+        if (sel) {
+            if (sel.type != "Control") {
+                range = sel.createRange();
+                range.collapse(true);
+                x = range.boundingLeft;
+                y = range.boundingTop;
+            }
+        } else if (win.getSelection) {
+            sel = win.getSelection();
+            if (sel.rangeCount) {
+                range = sel.getRangeAt(0).cloneRange();
+                if (range.getClientRects) {
+                    range.collapse(true);
+                    rects = range.getClientRects();
+                    if (rects.length > 0) {
+                        rect = rects[0];
+                    }
+                    // 光标在行首时，rect为undefined
+                    if(rect){
+                        x = rect.left;
+                        y = rect.top;
+                    }
+                }
+                // Fall back to inserting a temporary element
+                if ((x == 0 && y == 0) || rect === undefined) {
+                    var span = doc.createElement("span");
+                    if (span.getClientRects) {
+                        // Ensure span has dimensions and position by
+                        // adding a zero-width space character
+                        span.appendChild( doc.createTextNode("\u200b") );
+                        range.insertNode(span);
+                        rect = span.getClientRects()[0];
+                        x = rect.left;
+                        y = rect.top;
+                        var spanParent = span.parentNode;
+                        spanParent.removeChild(span);
+
+                        // Glue any broken text nodes back together
+                        spanParent.normalize();
+                    }
+                }
+            }
+        }
+        return { x: x, y: y };
+    }
+
+
+
+
+//     $("#plist li").click(function(){
+//     var text=$(this).text();
+//     console.log("准备插入:",text)
+//     TEditormd.insertValue(text);
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+            });
+
+
+
+
+
+            // $(function() {
+            //     testEditor = editormd("test-editormd", {
+            //         width  : "90%",
+            //         height : 720,
+            //         path   : '../lib/',
+            //         onchange : function() {
+            //             $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
+            //             console.log("onchange =>", this, this.id, this.settings, this.state);
+            //         }
+            //     });
+            // });
+ 
+
+
+
+
+            $(document).on('click', '#plist li', function () {
+
+ 
+    var text=$(this).text();
+    var or= TEditormd.getSelection()
+    text=text.replace(or,or+'');
+    text=text+'';
+    console.log("准备插入:",text)
+    // 插入
+    // TEditormd.insertValue(text);
+    // 替换选中
+    TEditormd.replaceSelection(text+"");
+
+
+})
+
+
+
+
+
+
+
+        </script>
+
+<!-- 预测提示 -->
+        <div id="plist">
+
+        </div>
+    <!-- 预测提示end -->    
+    </body>
+</html>
