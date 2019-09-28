@@ -112,7 +112,8 @@ def main():
     parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
     parser.add_argument('--save_path', default='generated/', type=str, required=False, help='存放生成的文件的路径')
     parser.add_argument('--articles_per_title', default=5, type=int, required=False, help='每个标题生成多少篇文章')
-    parser.add_argument('--titles', default='萧炎', type=str, required=False, help='标题列表，是一个字符串，用空格分开')
+    parser.add_argument('--titles', default='哈士奇', type=str, required=False, help='标题列表，是一个字符串，用空格分开')
+    parser.add_argument('--title', default='哈士奇', type=str, required=False, help='标题列表，是一个字符串，用空格分开')
     parser.add_argument('--titles_file', default='', type=str, required=False,
                         help='标题列表文件，文件中每行一个标题。如果这个选项有值则titles无效')
     parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
@@ -190,3 +191,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+ 

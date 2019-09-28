@@ -210,7 +210,7 @@ def main():
 
 
 
-def ai(text,length=20):
+def ai(text,length=20,nsamples=5):
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
@@ -318,3 +318,4 @@ def ai(text,length=20):
 
 if __name__ == '__main__':
     main()
+    # ai()

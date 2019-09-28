@@ -6,6 +6,9 @@ __pycache__/
 model/*
 data/*
 *.*~
+tensorboard_summary/*
+generated/*
+
 # C extensions
 *.so
 

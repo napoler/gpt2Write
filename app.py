@@ -39,8 +39,10 @@ def json_predict():
     # paragraph = request.args.get('text')
     # previous_line=request.args.get('sentence')
     text = data['text']
+    plen= data['plen']
+    n=data['n']
     text_array={'original':text,
-    'items':ai(text,150)
+    'items':ai(text,plen,n)
     }
     
  
