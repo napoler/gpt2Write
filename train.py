@@ -96,7 +96,7 @@ def main():
     full_tokenizer.max_len = n_ctx
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     #强制使用cpu
-    device = "cpu"
+    # device = "cpu"
 
     print('using device:', device)
 

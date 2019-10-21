@@ -215,7 +215,7 @@ def ai(text,length=20,nsamples=5):
     parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
     parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
-    parser.add_argument('--nsamples', default=5, type=int, required=False, help='生成几个样本')
+    parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
     parser.add_argument('--temperature', default=1, type=float, required=False, help='生成温度')
     parser.add_argument('--topk', default=8, type=int, required=False, help='最高几选一')
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
