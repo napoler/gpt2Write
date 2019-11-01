@@ -1,7 +1,8 @@
 import Terry_toolkit as tkit
 import os
 # data=[{ "keywords": "学习,学校","title": "借鉴：这篇最受欢迎校训，没有一个字讲学习",  "content": "“我知道，我不是因为偶然才来到这个世界，我是为"}]
-
+from MagicBaidu import MagicBaidu
+import pprint
 
 def add_data(data,path='data/'):
     """
@@ -15,6 +16,15 @@ def add_data(data,path='data/'):
 
     tjson.save(data)
     return   tjson.load()
+
+def search(keywords=''):
+    tsearch=tkit.SearchBaidu()
+    # articles=tsearch.get_full(keyword=keywords)
+    # print(articles)
+    ls=  tsearch.get(keyword=keywords,start=0)
+ 
+
+    return ls
 
 
 def data_pre_train( tfrom=0, limit=10, data_path='data/data.json'):
@@ -93,4 +103,5 @@ if __name__ == '__main__':
     # main()
     #执行构建训练样本
     #预先将data/data.json 复制进目录
-    data_pre_train_file('data/')
+    # data_pre_train_file('data/')
+    search('哈士奇')

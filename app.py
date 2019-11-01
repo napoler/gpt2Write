@@ -78,7 +78,7 @@ def json_get_keywords():
     """
     data= get_post_data()
     ttext=tkit.Text()
-    keywords=ttext.get_keywords(data['text'],num=10)
+    keywords=ttext.get_keywords(data['text'],num=20)
     return jsonify(keywords)
 
 
