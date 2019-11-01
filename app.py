@@ -82,6 +82,17 @@ def json_get_keywords():
     return jsonify(keywords)
 
 
+@app.route("/json/bulid/train",methods=[ 'POST'])
+def json_bulid_train():
+    """
+    构建训练数据
+    """
+    # data= get_post_data()
+    # ttext=tkit.Text()
+    # keywords=ttext.get_keywords(data['text'],num=10)
+    data=data_pre_train_file()
+    return jsonify(data)
+
 
 if __name__ == "__main__":
     app.run()
