@@ -17,14 +17,14 @@ def add_data(data,path='data/'):
     tjson.save(data)
     return   tjson.load()
 
-def search(keywords=''):
-    tsearch=tkit.SearchBaidu()
-    # articles=tsearch.get_full(keyword=keywords)
-    # print(articles)
-    ls=  tsearch.get(keyword=keywords,start=0)
+# def search(keywords=''):
+#     tsearch=tkit.SearchBaidu()
+#     # articles=tsearch.get_full(keyword=keywords)
+#     # print(articles)
+#     ls=  tsearch.get(keyword=keywords,start=0)
  
 
-    return ls
+#     return ls
 
 
 def data_pre_train( tfrom=0, limit=10, data_path='data/data.json'):
