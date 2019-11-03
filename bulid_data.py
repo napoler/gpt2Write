@@ -103,5 +103,5 @@ if __name__ == '__main__':
     # main()
     #执行构建训练样本
     #预先将data/data.json 复制进目录
-    # data_pre_train_file('data/')
-    search('哈士奇')
+    data_pre_train_file('data/')
+    # search('哈士奇')
