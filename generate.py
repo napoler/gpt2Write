@@ -216,8 +216,8 @@ def ai(text,length=20,nsamples=5):
     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
     parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
     parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
-    parser.add_argument('--temperature', default=1, type=float, required=False, help='生成温度')
-    parser.add_argument('--topk', default=8, type=int, required=False, help='最高几选一')
+    parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
+    parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
     parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
                         help='模型参数')
