@@ -76,7 +76,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     # print(len(articles))
     #z最后生成的文章列表
     # print(articles)
-    return articles
+    return articles,data
 def data_pre_train_file(path='./data/'):
     """
     生成训练样本
@@ -96,13 +96,13 @@ def data_pre_train_file(path='./data/'):
 
 
     # f1.write('hello boy!')
-    articles=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
+    articles,data=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
     # print(articles)
     if len(articles)>0:
         f1 = open(train_path,'w')
         f1.write("\n".join(articles))
         f1.close()
-        task['tfrom']=task['tfrom']+len(articles)
+        task['tfrom']=task['tfrom']+len(data)
         tjson.save([task])
         train_info={
             'task':task,
