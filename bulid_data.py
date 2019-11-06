@@ -94,19 +94,23 @@ def data_pre_train_file(path='./data/'):
         # task=[]
         task={"tfrom":0,'limit':30}
 
-    f1 = open(train_path,'w')
+
     # f1.write('hello boy!')
     articles=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
     # print(articles)
-    f1.write("\n".join(articles))
-    f1.close()
-    task['tfrom']=task['tfrom']+len(articles)
-    tjson.save([task])
-    train_info={
-        'task':task,
-        'path':task_path
-    }
-    return train_info
+    if len(articles)>0:
+        f1 = open(train_path,'w')
+        f1.write("\n".join(articles))
+        f1.close()
+        task['tfrom']=task['tfrom']+len(articles)
+        tjson.save([task])
+        train_info={
+            'task':task,
+            'path':task_path
+        }
+        return train_info
+    else:
+        return []
 
 from textrank4zh import TextRank4Keyword, TextRank4Sentence
 def  sentence_seg(text):
