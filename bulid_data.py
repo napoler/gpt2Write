@@ -67,7 +67,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
         article="".join(segs_pre+segs)
-        article_len=2000
+        article_len=20000
         for i in range(len(article)//article_len+1):
             #截取内容
             articles.append(article[i*article_len:(i+1)*article_len])
