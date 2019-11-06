@@ -28,7 +28,7 @@ def load():
     #根据文件编码类型，选择相应编码
     with open("data/train.txt", 'r', encoding='utf-8') as f:
       print('reading lines')
-      lines = f.readlines();
+      lines = f.readlines()
       lines = [line.replace('\n', ' [SEP] ') for line in lines]  # 用[SEP]表示换行, 段落之间使用SEP表示段落结束
     return lines
 

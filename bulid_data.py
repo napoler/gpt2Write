@@ -3,7 +3,10 @@ import os
 # data=[{ "keywords": "学习,学校","title": "借鉴：这篇最受欢迎校训，没有一个字讲学习",  "content": "“我知道，我不是因为偶然才来到这个世界，我是为"}]
 from MagicBaidu import MagicBaidu
 import pprint
-
+import numpy as np
+import csv
+from tqdm import tqdm
+import re
 def add_data(data,path='data/'):
     """
     添加数据样本
@@ -27,7 +30,9 @@ def add_data(data,path='data/'):
 #     return ls
 
 
-def data_pre_train( tfrom=0, limit=10, data_path='data/data.json'):
+
+
+def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     """
     from=0  #文章开始id
     limit=10 # 返回文章数目
@@ -47,18 +52,22 @@ def data_pre_train( tfrom=0, limit=10, data_path='data/data.json'):
         data=data[tfrom:]
     articles=[]
     for item in data:
-        segs=[]
+        segs_pre=[]
         try:
-            segs.append(item['keywords'])
+            segs_pre.append('[keywords]'+item['keywords']+'[/keywords]')
         except:
             pass
         try:
-           segs.append(item['title'])
+           segs_pre.append('[title]'+item['title']+"[/title]")
         except:
             pass
-        segs=sentence_seg(item['content'])
+        # content= "[content]"+item['content'] +"[/content]"
+        # content =  re.sub('\n\n', '\n', item['content'])
+        segs=sentence_seg("[content]"+item['content']+"[/content]")
+        # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
-        article="\n".join(segs)
+        article="".join(segs_pre+segs)
+        # article="\n".join(segs_pre)+'\n'+content
         articles.append(article)
     # print(len(articles))
     #z最后生成的文章列表
@@ -79,13 +88,13 @@ def data_pre_train_file(path='./data/'):
         os.remove(task_path)
     except:
         # task=[]
-        task={"tfrom":0,'limit':10}
+        task={"tfrom":0,'limit':30}
 
     f1 = open(train_path,'w')
     # f1.write('hello boy!')
     articles=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
     # print(articles)
-    f1.write("\n\n".join(articles))
+    f1.write("\n".join(articles))
     f1.close()
     task['tfrom']=task['tfrom']+len(articles)
     tjson.save([task])
@@ -99,9 +108,48 @@ from textrank4zh import TextRank4Keyword, TextRank4Sentence
 def  sentence_seg(text):
     segs=tkit.Text().sentence_segmentation_v1(text)
     return segs
+def csv_list(path="data/csv/"):
+    f = tkit.File()
+    csv_list=f.file_List(path, type='csv')
+    for line in csv_list:
+        print('add:',line)
+        try:
+            data=csv_data(file_path=line)
+            add_data(data=data)
+        except:
+            print('csv文件有误跳过')
+
+    
+
+
+def csv_data(file_path=''):
+    d=tkit.Csv().csv_data(file_path=file_path)
+    ttext=tkit.Text()
+    # print(d[10])
+    new_data=[]
+    for item in tqdm(d):
+        if item['title'] == '' or item['content'] == '':
+            # print(",哦哦哦")
+            pass
+        else:
+             
+            kwords=ttext.get_keywords(item['title']+' '+item['content'],num=20)
+            keywords=[]
+            for it in kwords:
+                keywords.append(it['word'])
+
+            # keywords=keywords
+            data_one={'keywords':'，'.join(keywords),'title':item['title'],'content':item['content']}
+            new_data.append(data_one)
+    return new_data
+
+
 if __name__ == '__main__':
     # main()
     #执行构建训练样本
     #预先将data/data.json 复制进目录
-    data_pre_train_file('data/')
-    # search('哈士奇')
+    data_pre_train_file('./data/')
+    # data_pre_train_file()
+
+    #将data/csv/目录下数据转化为 data.json 需要包含title 和content字段
+    # csv_list()
