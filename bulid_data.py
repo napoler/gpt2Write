@@ -53,12 +53,14 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     articles=[]
     for item in data:
         segs_pre=[]
+        segs_end=[]
         try:
             segs_pre.append('[keywords]'+item['keywords']+'[/keywords]')
         except:
             pass
         try:
            segs_pre.append('[title]'+item['title']+"[/title]")
+           segs_end.append('[pretitle]'+item['title']+"[/pretitle]")
         except:
             pass
         # content= "[content]"+item['content'] +"[/content]"
@@ -66,7 +68,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         segs=sentence_seg("[content]"+item['content']+"[/content]")
         # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
-        article="".join(segs_pre+segs)
+        article="".join(segs_pre+segs+segs_end)
         article_len=500
         for i in range(len(article)//article_len+1):
             #截取内容
