@@ -70,10 +70,10 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         # print("\n".join(segs))
         article="".join(segs_pre+segs+segs_end)
 
-        article_len=500
-        for i in range(len(article)//article_len+1):
+        article_max_len=500
+        for i in range(len(article)//article_max_len+1):
             #截取内容
-            articles.append(article[i*article_len:(i+1)*article_len])
+            articles.append(article[i*article_max_len:(i+1)*article_max_len])
             # article="\n".join(segs_pre)+'\n'+content
             # articles.append(article)
     # print(len(articles))
