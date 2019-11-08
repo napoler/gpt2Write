@@ -51,7 +51,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     else:
         data=data[tfrom:]
     articles=[]
-    for item in data:
+    for art_i,item in enumerate(data):
         segs_pre=[]
         segs_end=[]
         try:
@@ -69,6 +69,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
         article="".join(segs_pre+segs+segs_end)
+
         article_len=500
         for i in range(len(article)//article_len+1):
             #截取内容
@@ -78,7 +79,8 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     # print(len(articles))
     #z最后生成的文章列表
     # print(articles)
-    return articles
+    articles_num=art_i+1
+    return articles,articles_num
 def data_pre_train_file(path='./data/'):
     """
     生成训练样本
@@ -98,13 +100,13 @@ def data_pre_train_file(path='./data/'):
 
 
     # f1.write('hello boy!')
-    articles=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
+    articles,articles_num=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
     if len(articles)>0:
         f1 = open(train_path,'w')
         # print(articles)
         f1.write("\n".join(articles))
         f1.close()
-        task['tfrom']=task['tfrom']+len(articles)
+        task['tfrom']=task['tfrom']+articles_num
         tjson.save([task])
         train_info={
             'task':task,
