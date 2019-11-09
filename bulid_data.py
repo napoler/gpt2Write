@@ -140,6 +140,7 @@ def csv_data(file_path=''):
     # print(d[10])
     new_data=[]
     for item in tqdm(d):
+        # print(item)
         if item['title'] == '' or item['content'] == '':
             # print(",哦哦哦")
             pass
@@ -160,8 +161,8 @@ if __name__ == '__main__':
     # main()
     #执行构建训练样本
     #预先将data/data.json 复制进目录
-    data_pre_train_file('./data/')
+    # data_pre_train_file('./data/')
     # data_pre_train_file()
 
     #将data/csv/目录下数据转化为 data.json 需要包含title 和content字段
-    # csv_list()
+    csv_list()
