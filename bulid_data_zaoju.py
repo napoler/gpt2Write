@@ -91,7 +91,7 @@ def data_pre_train_file(path='./data/'):
         os.remove(task_path)
     except:
         # task=[]
-        task={"tfrom":0,'limit':600}
+        task={"tfrom":0,'limit':100}
 
     f1 = open(train_path,'w')
     # f1.write('hello boy!')
