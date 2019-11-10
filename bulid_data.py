@@ -51,7 +51,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     else:
         data=data[tfrom:]
     articles=[]
-    for art_i,item in enumerate(data):
+    for art_i,item in tqdm(enumerate(data)):
         segs_pre=[]
         segs_end=[]
         try:
@@ -96,7 +96,7 @@ def data_pre_train_file(path='./data/'):
         os.remove(task_path)
     except:
         # task=[]
-        task={"tfrom":0,'limit':30}
+        task={"tfrom":0,'limit':600}
 
 
     # f1.write('hello boy!')

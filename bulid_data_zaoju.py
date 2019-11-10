@@ -53,7 +53,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     articles=[]
     new_segs_all=[]
     ttext=tkit.Text()
-    for item in data:
+    for item in tqdm(data):
         segs_pre=[]
         # try:
         #     segs_pre.append('[keywords]'+item['keywords']+'[/keywords]')
@@ -91,7 +91,7 @@ def data_pre_train_file(path='./data/'):
         os.remove(task_path)
     except:
         # task=[]
-        task={"tfrom":0,'limit':100}
+        task={"tfrom":0,'limit':600}
 
     f1 = open(train_path,'w')
     # f1.write('hello boy!')
