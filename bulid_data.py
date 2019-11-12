@@ -7,6 +7,7 @@ import numpy as np
 import csv
 from tqdm import tqdm
 import re
+import argparse
 def add_data(data,path='data/'):
     """
     添加数据样本
@@ -68,6 +69,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
             pass
         # content= "[content]"+item['content'] +"[/content]"
         # content =  re.sub('\n\n', '\n', item['content'])
+        # print( item['content'])
         segs=sentence_seg(" [unused8] "+item['content']+" [SEP] ")
         # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
@@ -160,7 +162,7 @@ def csv_data(file_path=''):
     # return new_data
 def main():
     parser = argparse.ArgumentParser(usage="运行数据构建.", description="help info.")
-    parser.add_argument("--do", type=str, default='data_pre_train_file',required=True, help="输入运行的类型  (csv_list（将csv文件转换成data.json）,data_pre_train_file(构建豫训练) )")
+    parser.add_argument("--do", type=str, default='data_pre_train_file',required=False, help="输入运行的类型  (csv_list（将csv文件转换成data.json）,data_pre_train_file(构建豫训练) )")
     args = parser.parse_args()
     if args.do == 'csv_list':
         csv_list()

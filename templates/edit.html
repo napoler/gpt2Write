@@ -194,6 +194,9 @@ return str;
 
                 var listhtml="<ul>"
                 $.each(items,function(index,value){
+
+                  // marked_text="<div class='value' data='"+value+"' >"
+
                     // value_mini=value.charAt(value.length-3)
                     marked_text=removesp(value).replace(or,or+'<div class="b">');
                     marked_text=marked_text+'</div>';
