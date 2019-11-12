@@ -37,7 +37,10 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     from=0  #文章开始id
     limit=10 # 返回文章数目
     >>>data_pre_train(from=0, limit=10)
-    
+        [unused5] 标记关键词
+      [unused6]  标记标题
+    [unused7]  标记前文标题  
+       [unused8]  标记正文
     """
  
     tjson=tkit.Json(file_path=data_path)
@@ -60,7 +63,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         # except:
         #     pass
         try:
-           segs_pre.append('[title]'+item['title']+"[/title]")
+           segs_pre.append(' [unused6] ' +item['title']+" [/unused6] ")
         except:
             pass
         # content= "[content]"+item['content'] +"[/content]"
@@ -73,7 +76,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
             keywords=[]
             for it in kwords:
                 keywords.append(it['word'])
-            n_seq="[keywords]"+",".join(keywords)+"[/keywords][seg]"+s+"[/seg]"
+            n_seq=" [unused5] "+",".join(keywords)+" [unused5] [unused6] "+s+" [SEP] "
             new_segs_all.append(n_seq)
     return new_segs_all,data
 def data_pre_train_file(path='./data/'):

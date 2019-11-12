@@ -37,9 +37,12 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
     from=0  #文章开始id
     limit=10 # 返回文章数目
     >>>data_pre_train(from=0, limit=10)
-    
+    [unused5] 标记关键词
+      [unused6]  标记标题
+    [unused7]  标记前文标题  
+       [unused8]  标记正文
     """
- 
+
     tjson=tkit.Json(file_path=data_path)
     data=tjson.load()
     # print(len(data))
@@ -55,17 +58,17 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         segs_pre=[]
         segs_end=[]
         try:
-            segs_pre.append('[keywords]'+item['keywords']+'[/keywords]')
+            segs_pre.append(' [unused5] '+item['keywords']+' [SEP] ')
         except:
             pass
         try:
-           segs_pre.append('[title]'+item['title']+"[/title]")
-           segs_end.append('[pretitle]'+item['title']+"[/pretitle]")
+           segs_pre.append(' [unused6] '+item['title']+" [SEP] ")
+           segs_end.append(' [unused7] '+item['title']+" [SEP] ")
         except:
             pass
         # content= "[content]"+item['content'] +"[/content]"
         # content =  re.sub('\n\n', '\n', item['content'])
-        segs=sentence_seg("[content]"+item['content']+"[/content]")
+        segs=sentence_seg(" [unused8] "+item['content']+" [SEP] ")
         # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
         article="".join(segs_pre+segs+segs_end)
@@ -127,6 +130,7 @@ def csv_list(path="data/csv/"):
         print('add:',line)
         try:
             data=csv_data(file_path=line)
+            
             add_data(data=data)
         except:
             print('csv文件有误跳过')
@@ -144,25 +148,31 @@ def csv_data(file_path=''):
         if item['title'] == '' or item['content'] == '':
             # print(",哦哦哦")
             pass
-        else:
-             
+        else: 
             kwords=ttext.get_keywords(item['title']+' '+item['content'],num=20)
             keywords=[]
             for it in kwords:
                 keywords.append(it['word'])
-
             # keywords=keywords
             data_one={'keywords':'，'.join(keywords),'title':item['title'],'content':item['content']}
-            new_data.append(data_one)
-    return new_data
+            yield data_one
+    #         new_data.append(data_one)
+    # return new_data
+def main():
+    parser = argparse.ArgumentParser(usage="运行数据构建.", description="help info.")
+    parser.add_argument("--do", type=str, default='data_pre_train_file',required=True, help="输入运行的类型  (csv_list（将csv文件转换成data.json）,data_pre_train_file(构建豫训练) )")
+    args = parser.parse_args()
+    if args.do == 'csv_list':
+        csv_list()
+    elif args.do == 'data_pre_train_file':
+        data_pre_train_file('./data/')
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     #执行构建训练样本
     #预先将data/data.json 复制进目录
-    data_pre_train_file('./data/')
+    # data_pre_train_file('./data/')
     # data_pre_train_file()
-
     #将data/csv/目录下数据转化为 data.json 需要包含title 和content字段
     # csv_list()

@@ -214,9 +214,9 @@ def ai(text,length=20,nsamples=5):
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
-    parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
+    parser.add_argument('--batch_size', default=2, type=int, required=False, help='生成的batch size')
     parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
-    parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
+    parser.add_argument('--temperature', default=1, type=float, required=False, help='生成温度')
     parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
     parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
@@ -226,7 +226,7 @@ def ai(text,length=20,nsamples=5):
     parser.add_argument('--prefix', default=text, type=str, required=False, help='生成文章的开头')
     parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
     parser.add_argument('--segment', action='store_true', help='中文以词为单位')
-    parser.add_argument('--fast_pattern', action='store_true', help='采用更加快的方式生成文本')
+    parser.add_argument('--fast_pattern',default=True, action='store_true', help='采用更加快的方式生成文本')
     parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
     parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
 
@@ -258,7 +258,10 @@ def ai(text,length=20,nsamples=5):
     if length == -1:
         length = model.config.n_ctx - len(args.prefix)
     elif length > model.config.n_ctx - len(args.prefix):
-        raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+        print("输入内容过长自动裁切,方便生成足够数据")
+        args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
     if args.save_samples:
         if not os.path.exists(args.save_samples_path):
             os.makedirs(args.save_samples_path)
@@ -287,6 +290,23 @@ def ai(text,length=20,nsamples=5):
                         text[i] = ''
                     if item == '[CLS]' or item == '[SEP]':
                         text[i] = '\n'
+
+                    # [unused5] 标记关键词
+                    # [unused6]  标记标题
+                    # [unused7]  标记前文标题  
+                    # [unused8]  标记正文
+                    # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
+                    #     text[i] = '\n'
+                    if item == '[unused5]':
+                        text[i] = ' [keywords] \n'
+                    if item == '[unused6]':
+                        text[i] = ' [title] \n'
+                    if item == '[unused7]':
+                        text[i] = ' [pretitle] \n'        
+                    if item == '[unused8]':
+                        text[i] = ' [content] \n'      
+                    # if item == '[title]':
+                    #     text[i] = '\n标题: '
                 info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
                 print(info)
                 text = ''.join(text).replace('##', '').strip()
