@@ -63,7 +63,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         # except:
         #     pass
         try:
-           segs_pre.append(' [unused6] ' +item['title']+" [/unused6] ")
+           segs_pre.append(' [PT] ' +item['title']+" [SEP] ")
         except:
             pass
         # content= "[content]"+item['content'] +"[/content]"
@@ -76,7 +76,7 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
             keywords=[]
             for it in kwords:
                 keywords.append(it['word'])
-            n_seq=" [unused5] "+",".join(keywords)+" [SEP] [unused6] "+s+" [SEP] "
+            n_seq=" [KW] "+",".join(keywords)+" [SEP] "+s+""
             new_segs_all.append(n_seq)
     return new_segs_all,data
 def data_pre_train_file(path='./data/'):

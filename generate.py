@@ -286,9 +286,11 @@ def ai(text,length=20,nsamples=5):
                     if is_word(item) and is_word(text[i + 1]):
                         text[i] = item + ' '
                 for i, item in enumerate(text):
+                    print(text[i])
                     if item == '[MASK]':
                         text[i] = ''
                     if item == '[CLS]' or item == '[SEP]':
+                        # print('缓存')
                         text[i] = '\n'
 
                     # [unused5] 标记关键词
@@ -297,11 +299,12 @@ def ai(text,length=20,nsamples=5):
                     # [unused8]  标记正文
                     # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
                     #     text[i] = '\n'
-                    if item == '[unused5]':
+                    if item == '[TT]':
                         text[i] = ' [keywords] \n'
-                    if item == '[unused6]':
+                        print("关键词")
+                    if item == '[TT]':
                         text[i] = ' [title] \n'
-                    if item == '[unused7]':
+                    if item == '[PT]':
                         text[i] = ' [pretitle] \n'        
                     if item == '[unused8]':
                         text[i] = ' [content] \n'      

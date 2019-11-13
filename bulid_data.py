@@ -59,18 +59,18 @@ def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
         segs_pre=[]
         segs_end=[]
         try:
-            segs_pre.append(' [unused5] '+item['keywords']+' [SEP] ')
+            segs_pre.append(' [KW] '+item['keywords']+' [SEP] ')
         except:
             pass
         try:
-           segs_pre.append(' [unused6] '+item['title']+" [SEP] ")
-           segs_end.append(' [unused7] '+item['title']+" [SEP] ")
+           segs_pre.append(' [TT] '+item['title']+" [SEP] ")
+           segs_end.append(' [PT] '+item['title']+" [SEP] ")
         except:
             pass
         # content= "[content]"+item['content'] +"[/content]"
         # content =  re.sub('\n\n', '\n', item['content'])
         # print( item['content'])
-        segs=sentence_seg(" [unused8] "+item['content']+" [SEP] ")
+        segs=sentence_seg(" [CLS] "+item['content']+" [SEP] ")
         # segs=sentence_seg("[content]"+content+"[/content]")
         # print("\n".join(segs))
         article="".join(segs_pre+segs+segs_end)
