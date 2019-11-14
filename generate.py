@@ -4,14 +4,19 @@ import os
 import argparse
 from tqdm import trange
 from pytorch_transformers import GPT2LMHeadModel
+import gc
+import Terry_toolkit as tkit
 
+import subprocess
+
+import os
 
 def is_word(word):
     for item in list(word):
         if item not in 'qwertyuiopasdfghjklzxcvbnm':
             return False
     return True
-
+gc.set_threshold(700, 10, 5)
 
 def _is_chinese_char(char):
     """Checks whether CP is the codepoint of a CJK character."""
@@ -128,6 +133,7 @@ def main():
     parser.add_argument('--tokenizer_path', default='cache/vocab_small.txt', type=str, required=False, help='词表路径')
     parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
     parser.add_argument('--prefix', default='哈士奇', type=str, required=False, help='生成文章的开头')
+    parser.add_argument('--remove_prefix', default=True, required=False, help='生成文章的开头')
     parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
     parser.add_argument('--segment', action='store_true', help='中文以词为单位')
     parser.add_argument('--fast_pattern', action='store_true', help='采用更加快的方式生成文本')
@@ -191,9 +197,15 @@ def main():
                     if item == '[CLS]' or item == '[SEP]':
                         text[i] = '\n'
                 info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
-                print(info)
+                # print(info)
                 text = ''.join(text).replace('##', '').strip()
-                print(text)
+                # print(text)
+                if args.remove_prefix:
+                    remove_prefix_length =len(args.prefix)
+                    text=text[remove_prefix_length:]
+
+                
+                
                 if args.save_samples:
                     samples_file.write(info)
                     samples_file.write(text)
@@ -207,10 +219,10 @@ def main():
                 samples_file.close()
             break
 
+ 
 
 
-
-def ai(text,length=20,nsamples=5):
+def ai(text='',length=20,nsamples=5):
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
@@ -224,11 +236,13 @@ def ai(text,length=20,nsamples=5):
     parser.add_argument('--tokenizer_path', default='cache/vocab_small.txt', type=str, required=False, help='词表路径')
     parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
     parser.add_argument('--prefix', default=text, type=str, required=False, help='生成文章的开头')
+    parser.add_argument('--remove_prefix', default=True, required=False, help='生成文章的开头')
     parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
     parser.add_argument('--segment', action='store_true', help='中文以词为单位')
     parser.add_argument('--fast_pattern',default=True, action='store_true', help='采用更加快的方式生成文本')
     parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
     parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
+    parser.add_argument('--tid', default='0', type=str, required=False, help='保存生成内容')
 
     args = parser.parse_args()
     print('args:\n' + args.__repr__())
@@ -286,7 +300,7 @@ def ai(text,length=20,nsamples=5):
                     if is_word(item) and is_word(text[i + 1]):
                         text[i] = item + ' '
                 for i, item in enumerate(text):
-                    print(text[i])
+                    # print(text[i])
                     if item == '[MASK]':
                         text[i] = ''
                     if item == '[CLS]' or item == '[SEP]':
@@ -314,6 +328,15 @@ def ai(text,length=20,nsamples=5):
                 print(info)
                 text = ''.join(text).replace('##', '').strip()
                 print(text)
+                if args.remove_prefix:
+ 
+                    # remove_prefix_length =len(context_tokens)
+                    # text=text[remove_prefix_length:]
+ 
+                    prefix_clean =tkit.Text().clear(args.prefix)
+                    text=text.replace(prefix_clean,'')
+
+                
                 all_text.append(text)
                 if args.save_samples:
                     samples_file.write(info)
@@ -322,12 +345,28 @@ def ai(text,length=20,nsamples=5):
                     samples_file.write('=' * 90)
                     samples_file.write('\n' * 2)
         print("=" * 80)
+        del model
+        gc.collect()
+        for x in locals().keys():
+            # print("清理函数内存",locals()[x])
+            del locals()[x]
+        gc.collect()
+        #保存生成的数据
+        tkit.File().mkdir('tmp')
+        data_path="tmp/run_task"+args.tid+".json"
+        print('保存生成',data_path)
+        tjson=tkit.Json(file_path=data_path)
+        tjson.save([{'prefix':args.prefix,'data':all_text}])
+
         return all_text
+
         if generated == nsamples:
             # close file when finish writing.
             if args.save_samples:
                 samples_file.close()
             break
+    # del model,all_text
+    # gc.collect()
 
 
 
@@ -340,5 +379,5 @@ def ai(text,length=20,nsamples=5):
 
 
 if __name__ == '__main__':
-    main()
-    # ai()
+    # main()
+    ai()

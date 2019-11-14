@@ -151,7 +151,7 @@ def csv_data(file_path=''):
             # print(",哦哦哦")
             pass
         else: 
-            kwords=ttext.get_keywords(item['title']+' '+item['content'],num=20)
+            kwords=ttext.get_keywords(item['title']+' '+item['content'],num=40)
             keywords=[]
             for it in kwords:
                 keywords.append(it['word'])

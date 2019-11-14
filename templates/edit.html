@@ -1,286 +1,428 @@
 <!DOCTYPE html>
 <html lang="zh">
-    <head>
-        <meta charset="utf-8" />
-            <!-- Required meta tags -->
- 
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<head>
+  <meta charset="utf-8" />
+  <!-- Required meta tags -->
 
-        <title>Ai写作助手</title>
-        <link rel="stylesheet" href="/static/css/style.css" />
-        <link rel="stylesheet" href="/static/css/editormd.css" />
-        <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
-        <style>
-        div#plist {
-            /* 预测列表样式 */
-    position: absolute;
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    z-index: 9999;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-left: 6px solid #080;
-    font-size: 1.2em;
-    color: #333;
-    max-width: 40%;
+  <!-- Bootstrap CSS -->
+  
+  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <title>Ai写作助手</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/editormd.css" />
+  <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
+  <style>
+    div#plist {
+      /* 预测列表样式 */
+      position: absolute;
+
+      z-index: 9999;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 3px;
+      border-left: 6px solid rgb(10, 155, 238);
+      font-size: 1.2em;
+      color: #333;
+      max-width: 40%;
+      box-shadow: 1px 2px 3px#333;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    div#plist li {
+      list-style: none;
+      padding: 5px;
+      border-bottom: 1px dotted #ccc;
+      min-width: 150px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.9em;
+
+    }
+
+    div#plist li:nth-child(even) {
+      background: #ddd
+    }
+
+    div#plist li:hover {
+
+      background: rgb(7, 97, 156);
+      color: #fff;
+    }
+
+    .b {
+      color: firebrick
+    }
+
+    .tips {
+      width: 90%;
+      display: block;
+      margin: auto;
+    }
+
+    #settings-box .modal-body,    #settings-box .modal-header ,    #settings-box .modal-footer {
+
+margin: 0 30%;
+background: 
+
+#333;
+
 }
-div#plist li {
-    list-style: none;
-    padding: 5px;
-    border-bottom: 1px dotted #ccc;
-    min-width: 150px;
-    text-align: left;
-    cursor:pointer;
-    font-size: 0.9em;
+.pre-shot {
 
+  cursor: auto !important;
+
+color: #333 !important;
+
+border-bottom: 2px
+#067cbf solid !important;
+
+background:
+#0a9bee;
+
+color:
+#fff !important;
 }
-div#plist li:nth-child(even){
-    background:#f9f7f7
+.it.active{
+  background:#2673ec !important;
+  color:#fff !important
 }
-div#plist li:hover{
+  </style>
+</head>
 
-    background: #7e7;
-    color: #fff;
-}
+<body>
+  <div id="layout">
+    <header>
+      <h1>Ai edit</h1>
+    </header>
+    <p class='tips'>按下Tab键获取人工智能建议</p>
+    <div id="test-editormd">
+      <textarea style="display:none;"></textarea>
+    </div>
+  </div>
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/editor.md/editormd.min.js"></script>
+  <script type="text/javascript">
+    var testEditor;
 
-.b{
-color:firebrick
+    $(function () {
 
-}
-.tips{
-    width: 90%;
-    display: block;
-    margin: auto;
-}
+      window.sessionStorage.setItem('tab_task_time',Date.now())
 
-        </style>
-    </head>
-    <body>
-        <div id="layout">
-            <header>
-                <h1>Ai edit</h1>
-            </header>
-            <p class='tips'>按下Tab键获取人工智能建议</p>
-            <div id="test-editormd">
-                <textarea style="display:none;"></textarea>
-            </div>
-        </div>
-        <script src="/static/js/jquery.min.js"></script>
-        <script src="/static/editor.md/editormd.min.js"></script>
-        <script type="text/javascript">
-			var testEditor;
-
-            $(function() {
-
-
-                TEditormd = editormd("test-editormd", {
-                    width   : "90%",
-                    height  : 640,
-                    syncScrolling : "single",
-                    path    : "/static/editor.md/lib/",
-                    disabledKeyMaps : [
-        "Ctrl-B", "F11", "F10"  // disable some default keyboard shortcuts handle
-    ],
-    onload : function() {
-        var keyMap = {
-            "Ctrl-S": function(cm) {
-                alert("Ctrl+S");
+      TEditormd = editormd("test-editormd", {
+        width: "90%",
+        height: 640,
+        syncScrolling: "single",
+        path: "/static/editor.md/lib/",
+        disabledKeyMaps: [
+          "Ctrl-B", "F11", "F10"  // disable some default keyboard shortcuts handle
+        ],
+        onload: function () {
+          var keyMap = {
+            "Ctrl-S": function (cm) {
+              alert("Ctrl+S");
             },
-            "Tab": function(cm) {
-                // alert("tabsssss");
-                console.log("点击tab!")
-                tab()
+            "Tab": function (cm) {
+              // alert("tabsssss");
+              console.log("点击tab!")
+              tab()
             },
             // "Ctrl-A": function(cm) { // default Ctrl-A selectAll
             //     // custom
             //     alert("Ctrl+A");
             //     cm.execCommand("selectAll");
             // }
-        };
+          };
 
-        // setting signle key
-        var keyMap2 = {
-              "Ctrl-T": function(cm) {
-                alert("Ctrl+T");
-              }
-        };
-
-        this.addKeyMap(keyMap);
-        this.addKeyMap(keyMap2);
-        this.removeKeyMap(keyMap2);  // remove signle key
-    }
-                });
-                
-                /*
-                // or
-                testEditor = editormd({
-                    id      : "test-editormd",
-                    width   : "90%",
-                    height  : 640,
-                    path    : "../lib/"
-                });
-                */
-
-                $( "body" ).click(function() {
-//   alert( "Handler for .click() called." );
-  $("#plist").hide();
-});
- 
-
-                function tab(){
-                console.log("执行tab函数!")
-                var getCursor = TEditormd.getCursor()
-                // plist()
-
-                // console.log("坐标",getSelectionCoords())
-                // console.log("获取当前位置getCursor =>", getCursor);
-                // console.log("获取当前位置getCursor =>", getCursor.ch);
-                // console.log("获取当前位置getCursor =>", getCursor.line);
-                var now_ch =getCursor.ch;
-                var now_line =getCursor.line;
-                // TEditormd.setSelection({line:now_line-1, ch:10}, {line:now_line, ch:now_ch});
-                var pline = $("#pline").val();
-                console.log("getSelection =>", TEditormd.setSelection({line:now_line-pline, ch:0}, {line:now_line, ch:now_ch}));
-                console.log("获取的内容getSelection =>", TEditormd.getSelection());
-                text = TEditormd.getSelection()
-                getplist(text)
-                TEditormd.focus();
-
-                // TEditormd.setCursor({line:1, ch:2});
-                // TEditormd.replaceSelection("$$$$$$$$$");
-                // TEditormd.focus();
-
-                // http://editor.md.ipandao.com/examples/set-get-replace-selection.html
+          // setting signle key
+          var keyMap2 = {
+            "Ctrl-T": function (cm) {
+              alert("Ctrl+T");
             }
+          };
 
-            function getplist(text){
-            //    var text = '测试狗子'
-            var plen = $("#plen").val();
-            var n = $("#n").val();
-
+          this.addKeyMap(keyMap);
+          this.addKeyMap(keyMap2);
+          this.removeKeyMap(keyMap2);  // remove signle key
+        },
+        onchange : function() {
+                        $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
+                        console.log("onchange =>", this, this.id, this.settings, this.state);
+                        // 在输入后自动执行预测
+                        console.log("自动执行")
+                        var now=Date.now()
             
-            $.post("/json/predict", { 'text': text+"",'plen':plen,'n':n
+                        
+                        var tab_task = window.sessionStorage.getItem('tab_task')
+                        var tab_task_time=window.sessionStorage.getItem('tab_task_time')
+                        console.log("时间差值",now-tab_task_time)
+
+                        if (now-tab_task_time>=1000*5){
+                      
+                        
+                        if (tab_task==true && now-tab_task_time<1000*60*10){
+                          console.log("后台有任务运行")
+                        } else if (tab_task==true && now-tab_task_time>=1000*60*10){
+                          console.log("时间差值",now-tab_task_time)
+                          autotab();
+                        } else if (tab_task==false && now-tab_task_time<1000*10){
+                          console.log("小于10s")
+            
+                          // autotab();
+                         
+                        }else{
+                          autotab();
+                        }
+                    
+                        }else{
+                          console.log("小于1w")
+                        }
+                        var v=window.localStorage.getItem('versions')
+                        var n_v=Number(v)+1
+                         window.localStorage.setItem('versions',n_v)
+                         window.localStorage.setItem('versions'+n_v,TEditormd.getMarkdown())
+                        // var now=Date.now()
+                        // var data = window.localStorage.getItem('autotab_task')
+                        // if (now-data>1000*30){
+                        //   console.log("提交",now-data)
+                        //   autotab() 
+                        // }else{
+                        //   console.log("过于频繁提交",now-data)
+                        // }
+                        // autotab()
+                            // timer = setTimeout(function(){
+                            //   autotab()
+                            // },10);
+                      
+                    }
+      });
+
+      /*
+      // or
+      testEditor = editormd({
+          id      : "test-editormd",
+          width   : "90%",
+          height  : 640,
+          path    : "../lib/"
+      });
+      */
+
+      $("body").click(function () {
+        //   alert( "Handler for .click() called." );
+        $("#plist").hide();
+      });
+
+      function autotab() {
+        // var data = window.localStorage.setItem('autotab_task',Date.now())
+        var tab_task = window.sessionStorage.setItem('tab_task',true)
+        window.sessionStorage.setItem('tab_task_time',Date.now())
+        console.log("执行tab函数!")
+        var getCursor = TEditormd.getCursor()
+        // plist()
+
+        // console.log("坐标",getSelectionCoords())
+        // console.log("获取当前位置getCursor =>", getCursor);
+        // console.log("获取当前位置getCursor =>", getCursor.ch);
+        // console.log("获取当前位置getCursor =>", getCursor.line);
+        var now_ch = getCursor.ch;
+        var now_line = getCursor.line;
+        TEditormd.setSelection({line:now_line-1, ch:10}, {line:now_line, ch:now_ch});
+        var pline = $("#pline").val();
         
+        // console.log("getSelection =>", TEditormd.setSelection({ line: now_line - pline, ch: 0 }, { line: now_line, ch: now_ch }));
+        // console.log("获取的内容getSelection =>", TEditormd.getSelection());
+        text = TEditormd.getSelection()
+        TEditormd.setSelection({line:0, ch:0}, {line:0, ch:0});
+        getplist(text)
+        // TEditormd.setSelection()
+        
+        TEditormd.focus();
+        TEditormd.setCursor({line:now_line, ch:now_ch});
+ 
+      }
+      function tab() {
+        var tab_task = window.sessionStorage.setItem('tab_task',true)
+        window.sessionStorage.setItem('tab_task_time',Date.now())
+        console.log("执行tab函数!")
+        var getCursor = TEditormd.getCursor()
+        // plist()
+
+        // console.log("坐标",getSelectionCoords())
+        // console.log("获取当前位置getCursor =>", getCursor);
+        // console.log("获取当前位置getCursor =>", getCursor.ch);
+        // console.log("获取当前位置getCursor =>", getCursor.line);
+        var now_ch = getCursor.ch;
+        var now_line = getCursor.line;
+        // TEditormd.setSelection({line:now_line-1, ch:10}, {line:now_line, ch:now_ch});
+        var pline = $("#pline").val();
+        console.log("getSelection =>", TEditormd.setSelection({ line: now_line - pline, ch: 0 }, { line: now_line, ch: now_ch }));
+        console.log("获取的内容getSelection =>", TEditormd.getSelection());
+        text = TEditormd.getSelection()
+
+        getplist(text)
+        TEditormd.focus();
+
+        // TEditormd.setCursor({line:1, ch:2});
+        // TEditormd.replaceSelection("$$$$$$$$$");
+        // TEditormd.focus();
+
+        // http://editor.md.ipandao.com/examples/set-get-replace-selection.html
+      }
+
+      function getplist(text) {
+        //    var text = '测试狗子'
+        var plen = $("#plen").val();
+        var n = $("#n").val();
+        window.localStorage.setItem("text", text)
+
+
+        $.post("/json/predict", {
+          'text': text + "", 'plen': plen, 'n': n
+
         })
-                    .done(function (data) {
- 
-                        console.log(data.items)
-                        plist(data.items) 
- 
-
-                    }); 
-            }
- function removesp(str){
-    str = str.replace(/<\/?[^>]*>/g,''); //去除HTML tag
-str = str.replace(/[ | ]*\n/g,'\n'); //去除行尾空白
-str = str.replace(/\n[\s| | ]*\r/g,'\n'); //去除多余空行
- str=str.replace(/ /ig,'');//去掉 
-str=str.replace(/^[\s　]+|[\s　]+$/g, "");//去掉全角半角空格
-str=str.replace(/[\r\n]/g,"");//去掉回车换行
-return str;
- }
-            function plist(items) {
-                // 获取坐标
-                var coordinate =getSelectionCoords()
-                console.log("当前坐标",coordinate)
-                // $('body').append('<div id="plist">添加的内容</div>')
+          .done(function (data) {
+            var tab_task = window.sessionStorage.setItem('tab_task',false)
+            console.log("执行后台完毕,释放预测限制")
+            console.log(data.items)
+            window.localStorage.setItem('plist', JSON.stringify(data))
+            plist(data.items)
 
 
-                var or= TEditormd.getSelection()
-                or=   removesp(or)
+          });
+      }
+      function removesp(str) {
+        str = str.replace(/<\/?[^>]*>/g, ''); //去除HTML tag
+        str = str.replace(/[ | ]*\n/g, '\n'); //去除行尾空白
+        str = str.replace(/\n[\s| | ]*\r/g, '\n'); //去除多余空行
+        str = str.replace(/ /ig, '');//去掉 
+        str = str.replace(/^[\s　]+|[\s　]+$/g, "");//去掉全角半角空格
+        str = str.replace(/[\r\n]/g, "");//去掉回车换行
+        return str;
+      }
 
-                var listhtml="<ul>"
-                $.each(items,function(index,value){
 
-                  // marked_text="<div class='value' data='"+value+"' >"
 
-                    // value_mini=value.charAt(value.length-3)
-                    marked_text=removesp(value).replace(or,or+'<div class="b">');
-                    marked_text=marked_text+'</div>';
-    //  alert(i+"..."+value);
-    listhtml=listhtml+"<li data-text='"+value+"'>"+marked_text+"</li>"
-});
-listhtml=listhtml+"</ul>"
-            //     var listhtml=`
-            //   <ul><li class=''>1111</li>
-                
-            //     <li class=''>1111</li>
-            //     <li class=''>1111</li>
-            //     <li class=''>1111</li>
-            //     </ul>  
-            //     `
-                $("#plist").html(listhtml).show().css({"left":  Math.abs(coordinate.x)+10+"px","top":Math.abs(coordinate.y)+20+"px"})
-                
-            }
 
-                function getSelectionCoords(win) {
-                    // 获取光标坐标
+
+
+      function plist(items) {
+        // 获取坐标
+        var coordinate = getSelectionCoords()
+        console.log("当前坐标", coordinate)
+        // $('body').append('<div id="plist">添加的内容</div>')
+
+
+        var or = TEditormd.getSelection()
+        // or=   removesp(or)
+        var data = JSON.parse(window.localStorage.getItem('plist'))
+        var original=data.original
+        if (original.length>10){
+          var pre=original.substr(original.length-10,original.length)
+        }else{
+          var pre=original
+        }
+      
+        var listhtml = "<ul>"
+        listhtml="<li class='pre-shot'><span='label'>前文:</span>..."+pre+"</li>"
+
+        $.each(items, function (index, value) {
+          // console.log("准备or:",or)
+          //  text=value.replace(or,'');
+          // window.localStorage.setItem('plist'+index,text)
+          // marked_text="<div class='value' data='"+value+"' >"
+
+          // value_mini=value.charAt(value.length-3)
+          // marked_text=removesp(value).replace(or,or+'<div class="b">');
+          // marked_text_next=removesp(value).replace(or,or+'<div class="b">');
+          marked_text_next = removesp(value).replace(or, '<div class="b">');
+          // console.log(marked_text_next)
+          marked_text = marked_text_next + '</div>';
+          //  alert(i+"..."+value);
+          if (index==0){
+            listhtml = listhtml + "<li class='it active it-"+index+"' data-text='" + index + "'>" + marked_text + "</li>" 
+          }else{
+            listhtml = listhtml + "<li class='it it-"+index+"' data-text='" + index + "'>" + marked_text + "</li>"
+          }
+          
+        });
+        listhtml = listhtml + "</ul>"
+        //     var listhtml=`
+        //   <ul><li class=''>1111</li>
+
+        //     <li class=''>1111</li>
+        //     <li class=''>1111</li>
+        //     <li class=''>1111</li>
+        //     </ul>  
+        //     `
+        $("#plist").html(listhtml).show().css({ "left": Math.abs(coordinate.x) + 10 + "px", "top": Math.abs(coordinate.y) + 40 + "px" })
+
+      }
+
+      function getSelectionCoords(win) {
+        // 获取光标坐标
         win = win || window;
         var doc = win.document;
         var sel = doc.selection, range, rects, rect;
         var x = 0, y = 0;
         if (sel) {
-            if (sel.type != "Control") {
-                range = sel.createRange();
-                range.collapse(true);
-                x = range.boundingLeft;
-                y = range.boundingTop;
-            }
+          if (sel.type != "Control") {
+            range = sel.createRange();
+            range.collapse(true);
+            x = range.boundingLeft;
+            y = range.boundingTop;
+          }
         } else if (win.getSelection) {
-            sel = win.getSelection();
-            if (sel.rangeCount) {
-                range = sel.getRangeAt(0).cloneRange();
-                if (range.getClientRects) {
-                    range.collapse(true);
-                    rects = range.getClientRects();
-                    if (rects.length > 0) {
-                        rect = rects[0];
-                    }
-                    // 光标在行首时，rect为undefined
-                    if(rect){
-                        x = rect.left;
-                        y = rect.top;
-                    }
-                }
-                // Fall back to inserting a temporary element
-                if ((x == 0 && y == 0) || rect === undefined) {
-                    var span = doc.createElement("span");
-                    if (span.getClientRects) {
-                        // Ensure span has dimensions and position by
-                        // adding a zero-width space character
-                        span.appendChild( doc.createTextNode("\u200b") );
-                        range.insertNode(span);
-                        rect = span.getClientRects()[0];
-                        x = rect.left;
-                        y = rect.top;
-                        var spanParent = span.parentNode;
-                        spanParent.removeChild(span);
-
-                        // Glue any broken text nodes back together
-                        spanParent.normalize();
-                    }
-                }
+          sel = win.getSelection();
+          if (sel.rangeCount) {
+            range = sel.getRangeAt(0).cloneRange();
+            if (range.getClientRects) {
+              range.collapse(true);
+              rects = range.getClientRects();
+              if (rects.length > 0) {
+                rect = rects[0];
+              }
+              // 光标在行首时，rect为undefined
+              if (rect) {
+                x = rect.left;
+                y = rect.top;
+              }
             }
+            // Fall back to inserting a temporary element
+            if ((x == 0 && y == 0) || rect === undefined) {
+              var span = doc.createElement("span");
+              if (span.getClientRects) {
+                // Ensure span has dimensions and position by
+                // adding a zero-width space character
+                span.appendChild(doc.createTextNode("\u200b"));
+                range.insertNode(span);
+                rect = span.getClientRects()[0];
+                x = rect.left;
+                y = rect.top;
+                var spanParent = span.parentNode;
+                spanParent.removeChild(span);
+
+                // Glue any broken text nodes back together
+                spanParent.normalize();
+              }
+            }
+          }
         }
         return { x: x, y: y };
-    }
+      }
 
 
 
 
-//     $("#plist li").click(function(){
-//     var text=$(this).text();
-//     console.log("准备插入:",text)
-//     TEditormd.insertValue(text);
-// });
-
-
-
-
-
+      //     $("#plist li").click(function(){
+      //     var text=$(this).text();
+      //     console.log("准备插入:",text)
+      //     TEditormd.insertValue(text);
+      // });
 
 
 
@@ -289,146 +431,197 @@ listhtml=listhtml+"</ul>"
 
 
 
-            });
 
 
 
 
 
-            // $(function() {
-            //     testEditor = editormd("test-editormd", {
-            //         width  : "90%",
-            //         height : 720,
-            //         path   : '../lib/',
-            //         onchange : function() {
-            //             $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
-            //             console.log("onchange =>", this, this.id, this.settings, this.state);
-            //         }
-            //     });
-            // });
- 
+    });
 
 
 
 
-            $(document).on('click', '#plist li', function () {
 
- 
-    var text=$(this).data('text');
-    var or= TEditormd.getSelection()
-    text=text.replace(or,or+'');
-    text=text+'';
-    console.log("准备插入:",text)
-    // 插入
-    // TEditormd.insertValue(text);
-    // 替换选中
-    TEditormd.replaceSelection(text+"");
-    TEditormd.focus();
+    // $(function() {
+    //     testEditor = editormd("test-editormd", {
+    //         width  : "90%",
+    //         height : 720,
+    //         path   : '../lib/',
+    //         onchange : function() {
+    //             $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
+    //             console.log("onchange =>", this, this.id, this.settings, this.state);
+    //         }
+    //     });
+    // });
+
+
+
+    $(document).on('click', '#getkeywords', function () {
+
+
+    var  text=TEditormd.getMarkdown()
+    $.post("/json/get/keywords", {
+        // 'text': text + "", 'plen': plen, 'n': n
+          'text': text
+
+      })
+        .done(function (data) {
+          console.log(data)
+          keywords_text=''
+          $.each(data, function (index,value){
+            keywords_text=keywords_text+value['word']+"，"
+          })
+
+          TEditormd.setValue(" [KW] "+keywords_text)
+
+
+
+        })
 
 })
 
 
 
+    $(document).on('click', '#plist li.it', function () {
+
+
+      var id = $(this).data('text');
+      var data = JSON.parse(window.localStorage.getItem('plist'))
+      // console.log('data',data)
+      var text = data.items[id]
+      var or = TEditormd.getSelection()
+      // console.log("准备or:",or)
+      // text=text.replace(or,or+'');
+      // text=text+'';
+      // console.log("准备插入:",text)
+      // 插入
+      TEditormd.insertValue(or + "" + text);
+      // 替换选中
+      // TEditormd.replaceSelection(text+"");
+      // TEditormd.focus();
+
+    })
 
 
 
+    $(document).on('click', '.settings', function () {
+      console.log("doank")
+      $('#settings-box').modal('show')
+    })
 
-        </script>
-        <div class="container">
-            <!-- Content here -->
 
-<div class="pdo_tools">
+    $(document).on('click', '.close', function () {
+      console.log("close")
+      $('#settings-box').modal('hide')
+    })
+
+
+    var x = 0;//水平方向位移
+var y = 0;//垂直方向位移
+$(document).keydown(function (event) {
  
+  switch(event.keyCode) {
+     case 38:
+        console.log("up")
+        $(".it.active").removeClass("active").prev().addClass("active")
 
-    <form>
-        <div class="form-row">
-          <div class="col-md-4 mb-3">
-            <label for="validationServer01">预测字数</label>
-            <input  type="number"  id="plen"  value='50' class="form-control is-valid" id="validationServer01" placeholder="First name"  required>
-            <div class="valid-feedback">
-              Looks good!
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="validationServer02">预测条数</label>
-            <input type="number" class="form-control is-valid" id="n" placeholder="" value="5" required>
-            <div class="valid-feedback">
-              Looks good!
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="validationServer02">向前预测范围(行数)</label>
-            <input type="number" class="form-control is-valid" id="pline" placeholder="" value="0" required>
-            <div class="valid-feedback">
-              Looks good!
-            </div>
-          </div>
-          </div>
-        </div>
-        <!-- <div class="form-row">
-          <div class="col-md-6 mb-3">
-            <label for="validationServer03">City</label>
-            <input type="text" class="form-control is-invalid" id="validationServer03" placeholder="City" required>
-            <div class="invalid-feedback">
-              Please provide a valid city.
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="validationServer04">State</label>
-            <input type="text" class="form-control is-invalid" id="validationServer04" placeholder="State" required>
-            <div class="invalid-feedback">
-              Please provide a valid state.
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="validationServer05">Zip</label>
-            <input type="text" class="form-control is-invalid" id="validationServer05" placeholder="Zip" required>
-            <div class="invalid-feedback">
-              Please provide a valid zip.
-            </div>
-          </div>
-        </div> -->
-        <!-- <div class="form-group">
-          <div class="form-check">
-            <input class="form-check-input is-invalid" type="checkbox" value="" id="invalidCheck3" required>
-            <label class="form-check-label" for="invalidCheck3">
-              Agree to terms and conditions
-            </label>
-            <div class="invalid-feedback">
-              You must agree before submitting.
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-primary" type="submit">Submit form</button> -->
-      </form>
-
-
-
-
-
-
-
-
-
-
-
-
+        break;
+      case 40:
+        console.log("down")
+        $(".it.active").removeClass("active").next().addClass("active")
+        break;
+      case 13:
+        console.log("回车")
+        // var id=  $(".it.active").data('text')
  
-</div>
+        // var data = JSON.parse(window.localStorage.getItem('plist'))
+        // // console.log('data',data)
+        // var text = data.items[id]
+        // var or = TEditormd.getSelection()
+        // // console.log("准备or:",or)
+        // // text=text.replace(or,or+'');
+        // // text=text+'';
+        // // console.log("准备插入:",text)
+        // // 插入
+        // TEditormd.insertValue(or + "" + text);
+        // $("#plist").hide()
+        // $(".it.active").removeClass("active")
+        break;
+     default:
+        console.log("")
+} 
 
-</div>
-<!-- 预测提示 -->
-        <div id="plist">
 
-        </div>
-    <!-- 预测提示end -->    
-    </body>
+});
+
+  </script>
+  <div class="container">
+    <!-- Content here -->
+
+    <div class="btn-group">
+      <button id="settings" type="button" class="btn btn-default settings">设置</button>
+      <button id='getkeywords' type="button" class="btn btn-default">转换成关键词 </button>
+      <button type="button" class="btn btn-default">按钮 3</button>
+    </div>
+
+    <div id="settings-box" class="pdo_tools modal">
+      <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+         
+      </div>
+      <div class="modal-body">
+        <form>
+ 
+            <div class="form-row">
+              <label for="validationServer01">预测字数</label>
+              <input type="number" id="plen" value='50' class="form-control is-valid" id="validationServer01"
+                placeholder="First name" required>
+              <div class="valid-feedback">
+                Looks good!
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="validationServer02">预测条数</label>
+              <input type="number" class="form-control is-valid" id="n" placeholder="" value="5" required>
+              <div class="valid-feedback">
+                Looks good!
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="validationServer02">向前预测范围(行数)</label>
+              <input type="number" class="form-control is-valid" id="pline" placeholder="" value="100" required>
+              <div class="valid-feedback">
+                Looks good!
+              </div>
+            </div>
+     
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+          <button id="settingsclose" type="button" class="btn btn-default settings close">关闭</button>
+       
+      </div>
+    </div>
+
+    </div>
+
+  </div>
+  <!-- 预测提示 -->
+  <div id="plist">
+
+  </div>
+  <!-- 预测提示end -->
+</body>
 
 
-       <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+  integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.min.js"
+  integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
 </html>
