@@ -226,9 +226,9 @@ def ai(text='',length=20,nsamples=5):
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
-    parser.add_argument('--batch_size', default=2, type=int, required=False, help='生成的batch size')
+    parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
     parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
-    parser.add_argument('--temperature', default=1, type=float, required=False, help='生成温度')
+    parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
     parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
     parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
@@ -281,7 +281,8 @@ def ai(text='',length=20,nsamples=5):
             os.makedirs(args.save_samples_path)
         samples_file = open(args.save_samples_path + '/samples.txt', 'w', encoding='utf8')
     while True:
-        raw_text = args.prefix
+        # raw_text = args.prefix
+        raw_text =tkit.Text().clear(args.prefix+'')
         context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
         generated = 0
         all_text=[]
@@ -331,13 +332,17 @@ def ai(text='',length=20,nsamples=5):
                 if args.remove_prefix:
  
                     # remove_prefix_length =len(context_tokens)
+                    # print(remove_prefix_length)
                     # text=text[remove_prefix_length:]
  
-                    prefix_clean =tkit.Text().clear(args.prefix)
-                    text=text.replace(prefix_clean,'')
+                    # prefix_clean =tkit.Text().clear(args.prefix)
+                    print('raw_text',raw_text)
+                    text=text.replace(raw_text,'')
 
-                
-                all_text.append(text)
+                if text in all_text:
+                    pass
+                else: 
+                   all_text.append(text)
                 if args.save_samples:
                     samples_file.write(info)
                     samples_file.write(text)

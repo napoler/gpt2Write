@@ -151,53 +151,53 @@ color:
           this.removeKeyMap(keyMap2);  // remove signle key
         },
         onchange : function() {
-                        $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
-                        console.log("onchange =>", this, this.id, this.settings, this.state);
-                        // 在输入后自动执行预测
-                        console.log("自动执行")
-                        var now=Date.now()
+                        // $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
+                        // console.log("onchange =>", this, this.id, this.settings, this.state);
+                        // // 在输入后自动执行预测
+                        // console.log("自动执行")
+                        // var now=Date.now()
             
                         
-                        var tab_task = window.sessionStorage.getItem('tab_task')
-                        var tab_task_time=window.sessionStorage.getItem('tab_task_time')
-                        console.log("时间差值",now-tab_task_time)
+                        // var tab_task = window.sessionStorage.getItem('tab_task')
+                        // var tab_task_time=window.sessionStorage.getItem('tab_task_time')
+                        // console.log("时间差值",now-tab_task_time)
 
-                        if (now-tab_task_time>=1000*5){
+                        // if (now-tab_task_time>=1000*5){
                       
                         
-                        if (tab_task==true && now-tab_task_time<1000*60*10){
-                          console.log("后台有任务运行")
-                        } else if (tab_task==true && now-tab_task_time>=1000*60*10){
-                          console.log("时间差值",now-tab_task_time)
-                          autotab();
-                        } else if (tab_task==false && now-tab_task_time<1000*10){
-                          console.log("小于10s")
+                        // if (tab_task==true && now-tab_task_time<1000*60*10){
+                        //   console.log("后台有任务运行")
+                        // } else if (tab_task==true && now-tab_task_time>=1000*60*10){
+                        //   console.log("时间差值",now-tab_task_time)
+                        //   autotab();
+                        // } else if (tab_task==false && now-tab_task_time<1000*10){
+                        //   console.log("小于10s")
             
-                          // autotab();
+                        //   // autotab();
                          
-                        }else{
-                          autotab();
-                        }
-                    
-                        }else{
-                          console.log("小于1w")
-                        }
-                        var v=window.localStorage.getItem('versions')
-                        var n_v=Number(v)+1
-                         window.localStorage.setItem('versions',n_v)
-                         window.localStorage.setItem('versions'+n_v,TEditormd.getMarkdown())
-                        // var now=Date.now()
-                        // var data = window.localStorage.getItem('autotab_task')
-                        // if (now-data>1000*30){
-                        //   console.log("提交",now-data)
-                        //   autotab() 
                         // }else{
-                        //   console.log("过于频繁提交",now-data)
+                        //   autotab();
                         // }
-                        // autotab()
-                            // timer = setTimeout(function(){
-                            //   autotab()
-                            // },10);
+                    
+                        // }else{
+                        //   console.log("小于1w")
+                        // }
+                        // var v=window.localStorage.getItem('versions')
+                        // var n_v=Number(v)+1
+                        //  window.localStorage.setItem('versions',n_v)
+                        //  window.localStorage.setItem('versions'+n_v,TEditormd.getMarkdown())
+                        // // var now=Date.now()
+                        // // var data = window.localStorage.getItem('autotab_task')
+                        // // if (now-data>1000*30){
+                        // //   console.log("提交",now-data)
+                        // //   autotab() 
+                        // // }else{
+                        // //   console.log("过于频繁提交",now-data)
+                        // // }
+                        // // autotab()
+                        //     // timer = setTimeout(function(){
+                        //     //   autotab()
+                        //     // },10);
                       
                     }
       });
@@ -480,6 +480,29 @@ color:
 
 })
 
+$(document).on('click', '#getkeyseq', function () {
+
+
+var  text=TEditormd.getMarkdown()
+$.post("/json/get/keyseq", {
+    // 'text': text + "", 'plen': plen, 'n': n
+      'text': text
+
+  })
+    .done(function (data) {
+      console.log(data)
+      keywords_text=''
+      $.each(data, function (index,value){
+        keywords_text=keywords_text+value['text']+"。"
+      })
+
+      TEditormd.setValue(" [KW] "+keywords_text)
+
+
+
+    })
+
+})
 
 
     $(document).on('click', '#plist li.it', function () {
@@ -561,7 +584,7 @@ $(document).keydown(function (event) {
     <div class="btn-group">
       <button id="settings" type="button" class="btn btn-default settings">设置</button>
       <button id='getkeywords' type="button" class="btn btn-default">转换成关键词 </button>
-      <button type="button" class="btn btn-default">按钮 3</button>
+      <button id="getkeyseq" type="button" class="btn btn-default"> 转换成关键语句</button>
     </div>
 
     <div id="settings-box" class="pdo_tools modal">

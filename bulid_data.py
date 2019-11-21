@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division, print_function, unicode_literals
 import Terry_toolkit as tkit
 import os
 # data=[{ "keywords": "学习,学校","title": "借鉴：这篇最受欢迎校训，没有一个字讲学习",  "content": "“我知道，我不是因为偶然才来到这个世界，我是为"}]
@@ -8,6 +11,28 @@ import csv
 from tqdm import tqdm
 import re
 import argparse
+
+
+
+from sumy.parsers.html import HtmlParser
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+from sumy.nlp.stemmers import Stemmer
+from sumy.utils import get_stop_words
+
+import json
+
+
+
+
+
+
+
+
+
+
+
 def add_data(data,path='data/'):
     """
     添加数据样本
@@ -26,66 +51,124 @@ def add_data(data,path='data/'):
 #     # articles=tsearch.get_full(keyword=keywords)
 #     # print(articles)
 #     ls=  tsearch.get(keyword=keywords,start=0)
- 
+
 
 #     return ls
 
-
-
-
-def data_pre_train( tfrom=0, limit=20, data_path='data/data.json'):
+from memory_profiler import profile
+import gc
+# @profile
+def data_pre_train( data_path='data/data.json',train_path='data/train.txt' ):
     """
     from=0  #文章开始id
     limit=10 # 返回文章数目
     >>>data_pre_train(from=0, limit=10)
     [unused5] 标记关键词
       [unused6]  标记标题
-    [unused7]  标记前文标题  
+    [unused7]  标记前文标题
        [unused8]  标记正文
     """
-
-    tjson=tkit.Json(file_path=data_path)
-    data=tjson.load()
+    LANGUAGE = "chinese"
+    SENTENCES_COUNT = 10
+    article_max_len=500
+    # tjson=tkit.Json(file_path=data_path)
+    # data=tjson.auto_load()
     # print(len(data))
-    if len(data)>tfrom+limit:
-        data=data[tfrom:tfrom+limit]
-    elif len(data)<tfrom:
-        print("数据过短了，存在问t")
-        return []
-    else:
-        data=data[tfrom:]
-    articles=[]
-    for art_i,item in tqdm(enumerate(data)):
-        segs_pre=[]
-        segs_end=[]
-        try:
-            segs_pre.append(' [KW] '+item['keywords']+' [SEP] ')
-        except:
-            pass
-        try:
-           segs_pre.append(' [TT] '+item['title']+" [SEP] ")
-           segs_end.append(' [PT] '+item['title']+" [SEP] ")
-        except:
-            pass
-        # content= "[content]"+item['content'] +"[/content]"
-        # content =  re.sub('\n\n', '\n', item['content'])
-        # print( item['content'])
-        segs=sentence_seg(" [CLS] "+item['content']+" [SEP] ")
-        # segs=sentence_seg("[content]"+content+"[/content]")
-        # print("\n".join(segs))
-        article="".join(segs_pre+segs+segs_end)
+    ttext=tkit.Text()
+    # extractor = tkit.TripleExtractor()
+    # if len(data)>tfrom+limit:
+    #     data=data[tfrom:tfrom+limit]
+    # elif len(data)<tfrom:
+    #     print("数据过短了，存在问t")
+    #     return []
+    # else:
+    #     data=data[tfrom:]
+    # for item in tjson.auto_load():
+    stemmer = Stemmer(LANGUAGE)
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words(LANGUAGE)
+    ie=tkit.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
+    f1 = open(train_path,'w')
+    with open(data_path, 'r', encoding = 'utf-8') as data:
+        for art_i,it in tqdm(enumerate(data)):
+            item=json.loads(it[:-1])
+            # if i%1000==0:
+                # print('arti', art_i)
+            articles=[]
+            segs_pre=[]
+            segs_end=[]
+            # segs_pre.append(' [KW] '+item['keywords']+' [SEP] ')
+            # l=ttext.summary( item['content'],num=10)
+            # extractor = tkit.TripleExtractor()
+            # svos = extractor.triples_main(item['content'])
 
-        article_max_len=500
-        for i in range(len(article)//article_max_len+1):
-            #截取内容
-            articles.append(article[i*article_max_len:(i+1)*article_max_len])
-            # article="\n".join(segs_pre)+'\n'+content
-            # articles.append(article)
-    # print(len(articles))
-    #z最后生成的文章列表
-    # print(articles)
-    articles_num=art_i+1
-    return articles,articles_num
+            # extractor.clear()
+            # print('svos', svos)
+            parser = PlaintextParser.from_string(item['content'], Tokenizer(LANGUAGE))
+            l=[]
+            for sentence in summarizer(parser.document, SENTENCES_COUNT):
+                l.append(str(sentence))
+            # del sentence
+                
+            try:
+                s=[]
+                for it in ie.get('。'.join(l)):
+                    # print(it)
+                    if it==None:
+                        pass
+                    else:
+                    
+                        s.append(''.join(list(it)))
+                # print(s)
+                segs_pre.append(' [KW] '+'。'.join(s)+' [SEP] ')
+                del s
+            except:
+                pass
+            # svos = extractor.triples_main('。'.join(l))
+            try:
+                segs_pre.append(' [TT] '+item['title']+" [SEP] ")
+                segs_end.append(' [PT] '+item['title']+" [SEP] ")
+            except:
+                pass
+            segs=sentence_seg(" [CLS] "+item['content']+" [SEP] ")
+            article="".join(segs_pre+segs+segs_end)
+            for i in range(len(article)//article_max_len+1):
+                #截取内容
+                articles.append(article[i*article_max_len:(i+1)*article_max_len]+"")
+
+            f1.write("\n".join(articles)+"\n\n")
+            
+            del articles
+            del segs
+
+            del article
+            # del i
+            # del f1
+            gc.collect()
+        # print(len(articles))
+        #z最后生成的文章列表
+        # print(articles)
+
+            # print(art_i)
+            # if art_i>1000:
+            #         # del locals[key]
+            #     # print("达尔文哇哇哇哇呜呜呜哇哇哇哇哇哇哇哇哇哇哇哇")
+            #     break
+            # print(locals().keys())
+        f1.close()
+        gc.collect()
+        del stemmer
+        del summarizer
+        del ie
+
+
+        gc.collect()
+        return
+
+
+
+        # articles_num=art_i+1
+        # return articles,articles_num
 def data_pre_train_file(path='./data/'):
     """
     生成训练样本
@@ -95,31 +178,33 @@ def data_pre_train_file(path='./data/'):
     task_path=path+'task.json'
     data_path=path+'data.json'
     tjson=tkit.Json(file_path=task_path)
-    try:
-        tasks=tjson.load()
-        task=tasks[0]
-        os.remove(task_path)
-    except:
-        # task=[]
-        task={"tfrom":0,'limit':600}
+
+    # try:
+    #     tasks=tjson.load()
+    #     task=tasks[0]
+    #     os.remove(task_path)
+    # except:
+    #     # task=[]
+    #     task={"tfrom":0,'limit':10}
+    data_pre_train(data_path=data_path,train_path=train_path)
 
 
     # f1.write('hello boy!')
-    articles,articles_num=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
-    if len(articles)>0:
-        f1 = open(train_path,'w')
-        # print(articles)
-        f1.write("\n".join(articles))
-        f1.close()
-        task['tfrom']=task['tfrom']+articles_num
-        tjson.save([task])
-        train_info={
-            'task':task,
-            'path':task_path
-        }
-        return train_info
-    else:
-        return []
+    # articles,articles_num=data_pre_train(tfrom=task['tfrom'], limit=task['limit'], data_path=data_path)
+    # if len(articles)>0:
+    #     f1 = open(train_path,'w')
+    #     # print(articles)
+    #     f1.write("\n".join(articles))
+    #     f1.close()
+    #     # task['tfrom']=task['tfrom']+articles_num
+    #     # tjson.save([task])
+    #     train_info={
+    #         'task':task,
+    #         'path':task_path
+    #     }
+    #     return train_info
+    # else:
+    #     return []
 
 from textrank4zh import TextRank4Keyword, TextRank4Sentence
 def  sentence_seg(text):
@@ -132,12 +217,12 @@ def csv_list(path="data/csv/"):
         print('add:',line)
         try:
             data=csv_data(file_path=line)
-            
+
             add_data(data=data)
         except:
             print('csv文件有误跳过')
 
-    
+
 
 
 def csv_data(file_path=''):
@@ -150,7 +235,7 @@ def csv_data(file_path=''):
         if item['title'] == '' or item['content'] == '':
             # print(",哦哦哦")
             pass
-        else: 
+        else:
             kwords=ttext.get_keywords(item['title']+' '+item['content'],num=40)
             keywords=[]
             for it in kwords:

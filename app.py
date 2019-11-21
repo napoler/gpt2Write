@@ -9,7 +9,7 @@ import gc
 import subprocess
  
 import os
-
+from fun import *
 
 app = Flask(__name__)
 
@@ -128,6 +128,17 @@ def json_get_keywords():
     ttext=tkit.Text()
     keywords=ttext.get_keywords(data['text'],num=40)
     return jsonify(keywords)
+
+@app.route("/json/get/keyseq",methods=[ 'POST'])
+def json_get_keyseq():
+    """
+    构建训练数据
+    """
+    data= get_post_data()
+    # ttext=tkit.Text()
+    seq=get_keyseq(data['text'],num=30)
+    return jsonify(seq)
+
 
 
 @app.route("/json/bulid/train",methods=[ 'POST'])
