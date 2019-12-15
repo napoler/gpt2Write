@@ -23,11 +23,11 @@ from sumy.utils import get_stop_words
 
 import json
 
+# from .fun import *
 
 
-
-
-
+from jieba import analyse
+from harvesttext import HarvestText
 
 
 
@@ -54,7 +54,25 @@ def add_data(data,path='data/'):
 
 
 #     return ls
+def get_seq(text):
+    """
+    获取关键内容
+    三元组抽取    
+    """
+    ht=HarvestText()
+    s=[]
+    text=tkit.Text().clear(text)
+    for item in ht.triple_extraction(sent=text, standard_name=False, stopwords=None, expand = "all"):
+        if item=='':
+            pass
+        else:
+            # print(' '.join(item))
+            # s.append(str(item))
+            s.append(''.join(item))
+    # s="。".join(s)
 
+
+    return s
 from memory_profiler import profile
 import gc
 # @profile
@@ -89,72 +107,101 @@ def data_pre_train( data_path='data/data.json',train_path='data/train.txt' ):
     summarizer.stop_words = get_stop_words(LANGUAGE)
     ie=tkit.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
     f1 = open(train_path,'w')
+    articles=[]
+    # 引入TF-IDF关键词抽取接口
+    tfidf = analyse.extract_tags
+    # 引入TextRank关键词抽取接口
+    textrank = analyse.textrank
     with open(data_path, 'r', encoding = 'utf-8') as data:
         for art_i,it in tqdm(enumerate(data)):
             item=json.loads(it[:-1])
-            # if i%1000==0:
-                # print('arti', art_i)
-            articles=[]
+            # if art_i%10==0:
+            #     print('arti', art_i)
             segs_pre=[]
             segs_end=[]
-            # segs_pre.append(' [KW] '+item['keywords']+' [SEP] ')
-            # l=ttext.summary( item['content'],num=10)
-            # extractor = tkit.TripleExtractor()
-            # svos = extractor.triples_main(item['content'])
+            # # segs_pre.append(' [KW] '+item['keywords']+' [SEP] ')
+            # # l=ttext.summary( item['content'],num=10)
+            # # extractor = tkit.TripleExtractor()
+            # # svos = extractor.triples_main(item['content'])
 
-            # extractor.clear()
-            # print('svos', svos)
-            parser = PlaintextParser.from_string(item['content'], Tokenizer(LANGUAGE))
-            l=[]
-            for sentence in summarizer(parser.document, SENTENCES_COUNT):
-                l.append(str(sentence))
-            # del sentence
-                
+            # # extractor.clear()
+            # # print('svos', svos)
+            # parser = PlaintextParser.from_string(item['content'], Tokenizer(LANGUAGE))
+            # l=[]
+            # for sentence in summarizer(parser.document, SENTENCES_COUNT):
+            #     l.append(str(sentence))
+            # # del sentence
+            s=[]      
+
+
+
+
+            # # 这里开始处理关键词 关键语句等信息 
+            # try:
+            #     for it in ie.get(item['title']+'\n'+item['content']):
+            #         # print(it)
+            #         if it==None:
+            #             pass
+            #         else:
+            #             s.append(''.join(list(it)))
+            #     # print(s)
+            # except:
+            #     pass
+            # # s=get_seq(item['title']+'\n'+item['content'])
+            # # 基于TextRank算法进行关键词抽取
+            keywords = textrank(item['title']+'\n'+item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v')) 
+            # # 输出抽取出的关键词
+            # # print(keywords)
+            # # for keyword in keywords:
+            # #     print (keyword + "/",)
+            # # 基于TF-IDF算法进行关键词抽取
+            # # keywords = tfidf(item['title']+'\n'+item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v'))
+            # # print(keywords)
+            # # 输出抽取出的关键词
+            # # for keyword in keywords:
+            # #     print( keyword + "/",)
+            # # keywords1 =ttext.get_keywords(item['title']+'\n'+item['content'])
+            # # new_keywords=[]
+            # # for keyword in keywords1:
+            # #     new_keywords.append(keyword['word'])        
+            # # keywords =ttext.get_keyphrases(item['title']+'\n'+item['content'])
+            # # kws=keywords+new_keywords
+            # # # s.append('，'.join(kws))
+            # s=['，'.join(keywords)]+s
+            segs_pre.append(' [KW] '+'，'.join(keywords)+' [/KW] ')
+            # del s
+            # # svos = extractor.triples_main('。'.join(l))
+            # #这里的屏蔽内容
+
+
+
+
+
+
+
+
+
             try:
-                s=[]
-                for it in ie.get('。'.join(l)):
-                    # print(it)
-                    if it==None:
-                        pass
-                    else:
-                    
-                        s.append(''.join(list(it)))
-                # print(s)
-                segs_pre.append(' [KW] '+'。'.join(s)+' [SEP] ')
-                del s
+                segs_pre.append(' [TT] '+item['title']+" [/TT] ")
+                segs_end.append(' [PT] '+item['title']+" [/PT] ")
             except:
                 pass
-            # svos = extractor.triples_main('。'.join(l))
-            try:
-                segs_pre.append(' [TT] '+item['title']+" [SEP] ")
-                segs_end.append(' [PT] '+item['title']+" [SEP] ")
-            except:
-                pass
-            segs=sentence_seg(" [CLS] "+item['content']+" [SEP] ")
+            segs=sentence_seg(" [CLS] "+item['content']+" [END] ")
             article="".join(segs_pre+segs+segs_end)
+            
+            one=[]
             for i in range(len(article)//article_max_len+1):
                 #截取内容
-                articles.append(article[i*article_max_len:(i+1)*article_max_len]+"")
-
-            f1.write("\n".join(articles)+"\n\n")
-            
-            del articles
+                one.append(article[i*article_max_len:(i+1)*article_max_len]+"")
+            articles.append("\n".join(one)+"")
+            if art_i%100==0:
+                print('arti', art_i)
+                # f1.write("\n\n".join(articles)+"\n\n")
+                f1.write("\n\n".join(articles)+"")
+                articles=[]
+            # del articles
             del segs
-
-            del article
-            # del i
-            # del f1
-            gc.collect()
-        # print(len(articles))
-        #z最后生成的文章列表
-        # print(articles)
-
-            # print(art_i)
-            # if art_i>1000:
-            #         # del locals[key]
-            #     # print("达尔文哇哇哇哇呜呜呜哇哇哇哇哇哇哇哇哇哇哇哇")
-            #     break
-            # print(locals().keys())
+        f1.write("\n\n".join(articles)+"")
         f1.close()
         gc.collect()
         del stemmer
