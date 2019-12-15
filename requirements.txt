@@ -79,7 +79,7 @@ soupsieve==1.9.5
 sumy==0.8.1
 tb-nightly==1.15.0a20190908
 tensorboard==1.6.0
-tensorflow==1.6.0
+tensorflow==1.12.2
 tensorflow-estimator==1.14.0
 termcolor==1.1.0
 Terry-toolkit==0.0.1.6.2.8.61573828328.8504763
