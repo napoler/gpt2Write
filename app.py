@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, json, Response, jsonify,escape
 from generate import ai
 from bulid_data import *
-import Terry_toolkit as tkit
+import tkitDb,tkitText,tkitFile,tkitNlp
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import gc
@@ -89,7 +89,7 @@ def get_predict(text,plen,n):
         data_path="tmp/run_task"+tid+".json"
         print('load',data_path)
         try:
-            tjson=tkit.Json(file_path=data_path)
+            tjson=tkitDb.Json(file_path=data_path)
             return   tjson.load()[0]['data']
         except:
             print('load文件失败',data_path)
@@ -125,7 +125,7 @@ def json_get_keywords():
     构建训练数据
     """
     data= get_post_data()
-    ttext=tkit.Text()
+    ttext=tkitText.Text()
     keywords=ttext.get_keywords(data['text'],num=40)
     return jsonify(keywords)
 

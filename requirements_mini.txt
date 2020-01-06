@@ -1,0 +1,9 @@
+pytorch-transformers==1.2.0
+torch
+numpy
+tqdm
+sklearn
+keras
+tb-nightly
+future
+thulac

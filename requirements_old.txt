@@ -1,0 +1,16 @@
+pytorch-transformers==1.2.0
+torch
+numpy
+tqdm
+sklearn
+keras
+tb-nightly
+future
+thulac
+Flask==1.1.1
+Flask-Limiter==1.1.0
+tkitText
+tkitDb
+tkitFile
+pympler==0.8
+sumy
