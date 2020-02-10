@@ -7,9 +7,10 @@ tmp/*
 model/*
 data/*
 *.*~
+tensorboard_summary
 tensorboard_summary/*
 generated/*
-
+tkitfiles/*
 # C extensions
 *.so
 

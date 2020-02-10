@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="utf-8" />
+  <!-- Required meta tags -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <title>Ai写作助手</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/editormd.css" />
+  <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
+  <style>
+.btn {
+    background-color: rebeccapurple;
+    color: #fff;
+}
+
+
+  </style>
+</head>
+
+<body>
+  <div id="layout">
+    <header>
+      <h1>Ai  数据构建助手</h1>
+    </header>
+ 
+ 
+  </div>
+  <script src="/static/js/jquery.min.js"></script>
+  <!-- <script src="/static/editor.md/editormd.min.js"></script> -->
+  <script type="text/javascript">
+
+$(document).ready(function(){
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/tapi');
+    socket.on('my response', function(msg) {
+        $('#log').append('<p>Received: ' + msg.data + '</p>');
+        // $('#log').html('<p>Received: ' + msg.data + '</p>');
+        console.log(msg.data.items)
+        console.log(msg)
+        var html=[]
+        $.each(msg.data.items, function (index,value){
+            // keywords_text=keywords_text+value['word']+"，"
+            // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+            html=html+'<p> ' + value['title'] + '</p>'
+          })
+          $('#log').html(html)
+    });
+    socket.on('预测反馈', function(msg) {
+        // $('#log').append('<p>Received: ' + msg.data + '</p>');
+        // $('#log').html('<p>Received: ' + msg.data + '</p>');
+        console.log(msg.state)
+        console.log(msg)
+
+          switch(msg.step) {
+            case 'add':
+              // code block
+              console.log("开始")
+              add(msg.data)
+              break;
+            case 'get_articles':
+              // code block
+              get_articles(msg.data)
+              break;
+            case 'get_titles':
+            get_titles(msg.data)
+             break;
+            default:
+              // code block
+          }
+        // var html=[]
+        // $.each(msg.data.items, function (index,value){
+        //     // keywords_text=keywords_text+value['word']+"，"
+        //     // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+        //     html=html+'<p> ' + value['title'] + '</p>'
+        //   })
+        //   $('#log').html(html)
+    });
+
+    function add(data){
+
+      var html='<h4>添加搜索成功</h4>'
+        html=html+'<p>status:'+data['status']+'</p>'
+        html=html+'<p>jobid:'+data['jobid']+'</p>'
+        $('#log').append(html)
+    }
+    function get_articles(data){
+      // var html='<h4>添加搜索成功</h4>'
+      var html=''
+        $.each(data, function (index,value){
+            // keywords_text=keywords_text+value['word']+"，"
+            // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+            html=html+'<h4> ' + value['title'] + '</h4>'
+            html=html+'<div> ' + value['content'] + '</div>'
+          })
+          $('#search_list').append(html)
+    }
+    function get_titles(data){
+      var html=''
+        $.each(data, function (index,value){
+            // keywords_text=keywords_text+value['word']+"，"
+            // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+            html=html+'<li class="list-group-item"> ' +  value['title']  + '</li>'
+          })
+          $('#search_list_titles').append(html)
+    }
+
+    $('form#emit').submit(function(event) {
+        socket.emit('my event', {data: $('#emit_data').val()});
+        return false;
+    });
+
+    $('#search').click(function(event) {
+        console.log("点击搜索")
+        socket.emit('预测标题', {data: $('#keyword').val()});
+        var html='<li class="list-group-item">开始预测中...</li>'
+        $('#search_list_titles').html(html)
+        var html='<li class="list-group-item">开始预测中...</li>'
+        $('#search_list').html(html)
+        
+
+
+        return false;
+    });
+
+    $('form#broadcast').submit(function(event) {
+        socket.emit('my broadcast event', {data: $('#broadcast_data').val()});
+        return false;
+    });
+});
+ 
+// // 提交内容
+// $(document).on('click', '.add_post', function () {
+//       var title = $("#title").val()
+//       if (title == "" || title == null || title== undefined){
+
+//       }else{
+//         title=title+""
+//       }
+//       var keywords =$("#keywords").val()
+//       var content = $("#content").val()
+//       var contentfull=title+content
+//       console.log(keywords)
+//       if (keywords == "" || keywords == null || keywords== undefined){
+
+//         console.log('没有关键词自动获取')
+//         $.post("/json/get/keywords", {
+//         // 'text': text + "", 'plen': plen, 'n': n
+//           'text': contentfull
+
+//       })
+//         .done(function (data) {
+//           console.log(data)
+//           keywords_text=''
+//           $.each(data, function (index,value){
+//             keywords_text=keywords_text+value['word']+"，"
+//           })
+//           $("#keywords").val(keywords_text)
+//           $(".keywords").html(keywords_text)
+//           // plist(data.items)
+//           // alert("缺少关键词信息,已经自动获取,请再次提交!")
+//           $('#myModal').modal('show') // initializes and invokes show immediately
+
+//         });
+        
+//       }else{
+
+//         $.post("/json/add/data", {
+//         // 'text': text + "", 'plen': plen, 'n': n
+//         "keywords": keywords,'title':title,'content': content
+
+//       })
+//         .done(function (data) {
+//           console.log(data)
+//           // plist(data.items)
+//           $("#title").val('')
+//           $("#keywords").val('')
+//           $("#content").val('')
+//           $('#myModal').modal('hide') // initializes and invokes show immediately
+
+//           $("#data_info").html('已有:'+data['length'])
+//           // var data_list_html='<li>'
+//           // $.each(data['data_last'],function(index,value){
+//           //   data_list_html=data_list_html
+
+//           // })
+//         });
+
+
+//       }
+
+// })
+
+
+
+
+// // 获取关键词
+// $(document).on('click', '#search', function () {
+ 
+//       // var keywords =$("#keywords").val()
+//       var keyword = $("#keyword").val()
+ 
+
+//        $.get("/json/search", {
+//         // 'text': text + "", 'plen': plen, 'n': n
+//           'keyword': keyword
+//       })
+//         .done(function (data) {
+//           console.log(data)
+//           keywords_text=''
+//           $.each(data.items, function (index,value){
+//             console.log(value)
+//             html='<div class="list-group-item list-group-item-action"><div class="d-flex w-100 justify-content-between">'
+//             html=html+'<h5 class="mb-1">'+value['title']+'</h5>'+'</div>'
+//             html=html+'<div class="mb-1">'+value['content']+'</div>'
+//               html=html+'</div>'
+//             $("#search_list").append(html)
+
+//             // pre_title(value)
+ 
+//           })
+
+//           $.each(data.titles, function (index,value){
+//             console.log(value)
+//             html='<li>'
+//             html=html+value
+
+//               html=html+'</li>'
+//             $("#search_list_titles").append(html)
+
+//             // pre_title(value)
+ 
+//           })
+
+
+//           // keywords_text=keywords_text+"。"
+//           // $("#keywords").val(keywords_text)
+//           // plist(data.items)
+//         });
+
+// })
+
+
+
+
+function pre_title(data){
+  $.ajaxSettings.async = false;
+  $.post("/json/pre/title", {
+        // 'text': text + "", 'plen': plen, 'n': n
+        'title':data['title'],
+          'content': data['content']
+      })
+        .done(function (data) {
+          console.log(data)
+          $.each(data.items, function (index,value){
+            console.log(value)
+ 
+          })
+          // keywords_text=keywords_text+"。"
+          // $("#keywords").val(keywords_text)
+          // plist(data.items)
+        });
+
+
+} 
+
+
+
+    // $(function () {
+
+    //   function 
+    //   $.post("/json/predict", {
+    //     // 'text': text + "", 'plen': plen, 'n': n
+    //     "keywords": keywords
+
+    //   })
+    //     .done(function (data) {
+
+    //       console.log(data.items)
+    //       plist(data.items)
+
+
+    //     });
+    // }
+
+    //         })
+
+  </script>
+  <div class="container">
+    <!-- Content here -->
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container text-c">
+        <h1 class="display-4">搜索</h1>
+    
+          <div class="form-row align-items-center">
+            <div class="col-sm-9 my-1">
+ 
+              <input id="keyword" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
+            </div>
+             
+            <div class="col-auto my-1">
+              <button id='search' type="submit" class="btn btn-primary">搜索</button>
+            </div>
+          </div>
+ 
+
+      </div>
+    </div>
+    <h2>标题</h2>
+<ol id="search_list_titles" class="list-group">
+
+
+</ol>
+<h2>文章</h2>
+    <ul  id="search_list" class="list-group  list-group-flush">
+
+    </ul>
+
+
+
+
+
+
+
+    <h1>Flask-SocketIO Test</h1>
+    <p>Async mode is: <b>{{ async_mode }}</b></p>
+    <p>Average ping/pong latency: <b><span id="ping-pong"></span>ms</b></p>
+    <h2>Send:</h2>
+    <form id="emit" method="POST" action='#'>
+        <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+        <input type="submit" value="Echo">
+    </form>
+ 
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="Disconnect">
+    </form>
+    <h2>ai标题推荐:</h2>
+    <div id="log"></div>
+
+
+
+
+  </div>
+ 
+ 
+</body>
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+  integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+  integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</html>

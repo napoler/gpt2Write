@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="utf-8" />
+  <!-- Required meta tags -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <title>Ai写作助手</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/editormd.css" />
+  <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
+  <style>
+.btn {
+    background-color: rebeccapurple;
+    color: #fff;
+}
+
+
+  </style>
+</head>
+
+<body>
+  <div id="layout">
+    <header>
+      <h1>Ai  数据构建助手</h1>
+    </header>
+ 
+ 
+  </div>
+  <script src="/static/js/jquery.min.js"></script>
+  <!-- <script src="/static/editor.md/editormd.min.js"></script> -->
+  <script type="text/javascript">
+
+
+ 
+// 提交内容
+$(document).on('click', '.add_post', function () {
+      var title = $("#title").val()
+      if (title == "" || title == null || title== undefined){
+
+      }else{
+        title=title+""
+      }
+      var keywords =$("#keywords").val()
+      var content = $("#content").val()
+      var contentfull=title+content
+      console.log(keywords)
+      if (keywords == "" || keywords == null || keywords== undefined){
+
+        console.log('没有关键词自动获取')
+        $.post("/json/get/keywords", {
+        // 'text': text + "", 'plen': plen, 'n': n
+          'text': contentfull
+
+      })
+        .done(function (data) {
+          console.log(data)
+          keywords_text=''
+          $.each(data, function (index,value){
+            keywords_text=keywords_text+value['word']+"，"
+          })
+          $("#keywords").val(keywords_text)
+          $(".keywords").html(keywords_text)
+          // plist(data.items)
+          // alert("缺少关键词信息,已经自动获取,请再次提交!")
+          $('#myModal').modal('show') // initializes and invokes show immediately
+
+        });
+        
+      }else{
+
+        $.post("/json/add/data", {
+        // 'text': text + "", 'plen': plen, 'n': n
+        "keywords": keywords,'title':title,'content': content
+
+      })
+        .done(function (data) {
+          console.log(data)
+          // plist(data.items)
+          $("#title").val('')
+          $("#keywords").val('')
+          $("#content").val('')
+          $('#myModal').modal('hide') // initializes and invokes show immediately
+
+          $("#data_info").html('已有:'+data['length'])
+          // var data_list_html='<li>'
+          // $.each(data['data_last'],function(index,value){
+          //   data_list_html=data_list_html
+
+          // })
+        });
+
+
+      }
+
+})
+
+
+
+
+// 获取关键词
+$(document).on('click', '#getkeywords', function () {
+      var title = $("#title").val()
+      // var keywords =$("#keywords").val()
+      var content = $("#content").val()
+      var contentfull=title+"。"+content
+
+       $.post("/json/get/keywords", {
+        // 'text': text + "", 'plen': plen, 'n': n
+          'text': contentfull
+
+      })
+        .done(function (data) {
+          console.log(data)
+          keywords_text=''
+          $.each(data, function (index,value){
+            keywords_text=keywords_text+value['word']+"，"
+          })
+          keywords_text=keywords_text+"。"
+          $("#keywords").val(keywords_text)
+          // plist(data.items)
+        });
+
+})
+
+
+
+
+
+
+
+
+    // $(function () {
+
+    //   function 
+    //   $.post("/json/predict", {
+    //     // 'text': text + "", 'plen': plen, 'n': n
+    //     "keywords": keywords
+
+    //   })
+    //     .done(function (data) {
+
+    //       console.log(data.items)
+    //       plist(data.items)
+
+
+    //     });
+    // }
+
+    //         })
+
+  </script>
+  <div class="container">
+    <!-- Content here -->
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container text-c">
+        <h1 class="display-4">搜索</h1>
+        <form action="search" >
+          <div class="form-row align-items-center">
+            <div class="col-sm-9 my-1">
+ 
+              <input name="keyword" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
+            </div>
+             
+            <div class="col-auto my-1">
+              <button type="submit" class="btn btn-primary">搜索</button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+    <div  id="search_list" class="list-group">
+      {% for item in items %}
+     
+
+      <div class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1"> {{item['title']}}</h5>
+          <small class="text-muted">{{item['path']}}</small>
+        </div>
+        <div class="mb-1"> {{item['content']}}</div>
+        <small class="text-muted">Donec id elit non mi porta.</small>
+      </div>
+
+      {% endfor %}
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+ 
+ 
+</body>
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+  integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+  integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</html>

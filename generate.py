@@ -7,8 +7,10 @@ from pytorch_transformers import GPT2LMHeadModel
 import gc
 import Terry_toolkit as tkit
 
+import  tkitText
+from config import  *
 import subprocess
-
+import  time
 import os
 
 def is_word(word):
@@ -229,6 +231,160 @@ def ai(text='',length=20,nsamples=5):
     parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
     parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
     parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
+    parser.add_argument('--topk', default=50, type=int, required=False, help='最高几选一')
+    parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
+    parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
+                        help='模型参数')
+    parser.add_argument('--tokenizer_path', default='cache/vocab_small.txt', type=str, required=False, help='词表路径')
+    parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
+    parser.add_argument('--prefix', default=text, type=str, required=False, help='生成文章的开头')
+    parser.add_argument('--remove_prefix', default=True, required=False, help='移除头部')
+    parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
+    parser.add_argument('--segment', action='store_true', help='中文以词为单位')
+    parser.add_argument('--fast_pattern',default=True, action='store_true', help='采用更加快的方式生成文本')
+    parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
+    parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
+    parser.add_argument('--tid', default='0', type=str, required=False, help='保存生成内容')
+
+    args = parser.parse_args()
+    print('args:\n' + args.__repr__())
+
+    if args.no_wordpiece:
+        from tokenizations import tokenization_bert_without_wordpiece as tokenization_bert
+    elif args.segment:
+        from tokenizations import tokenization_bert_word_level as tokenization_bert
+    else:
+        from tokenizations import tokenization_bert
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.device  # 此处设置程序使用哪些显卡
+    length = args.length
+    batch_size = args.batch_size
+    nsamples = args.nsamples
+    temperature = args.temperature
+    topk = args.topk
+    topp = args.topp
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    tokenizer = tokenization_bert.BertTokenizer(vocab_file=args.tokenizer_path)
+    model = GPT2LMHeadModel.from_pretrained(args.model_path)
+    model.to(device)
+    model.eval()
+
+    if length == -1:
+        length = model.config.n_ctx - len(args.prefix)
+    elif length > model.config.n_ctx - len(args.prefix):
+        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+        print("输入内容过长自动裁切,方便生成足够数据")
+        args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
+    if args.save_samples:
+        if not os.path.exists(args.save_samples_path):
+            os.makedirs(args.save_samples_path)
+        samples_file = open(args.save_samples_path + '/samples.txt', 'w', encoding='utf8')
+    while True:
+        raw_text = args.prefix
+        # raw_text =tkit.Text().clear(args.prefix+'')
+        context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
+        generated = 0
+        all_text=[]
+        for _ in range(nsamples // batch_size):
+            out = generate(
+                model=model,
+                context=context_tokens,
+                length=length,
+                is_fast_pattern=args.fast_pattern,
+                temperature=temperature, top_k=topk, top_p=topp, device=device
+            )
+            for i in range(batch_size):
+                generated += 1
+                text = tokenizer.convert_ids_to_tokens(out)
+                for i, item in enumerate(text[:-1]):  # 确保英文前后有空格
+                    if is_word(item) and is_word(text[i + 1]):
+                        text[i] = item + ' '
+                if args.remove_prefix:
+                    # print('raw_text',raw_text)
+                    text=text[-length:]
+                    # print('text',text)
+                for i, item in enumerate(text):
+                    # print(text[i])
+                    if item == '[MASK]':
+                        text[i] = ''
+                    if item == '[CLS]' or item == '[SEP]':
+                        # print('缓存')
+                        text[i] = '\n'
+
+                    # [unused5] 标记关键词
+                    # [unused6]  标记标题
+                    # [unused7]  标记前文标题  
+                    # [unused8]  标记正文
+                    # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
+                    #     text[i] = '\n'
+                    if item == '[TT]':
+                        text[i] = ' [keywords] \n'
+                        print("关键词")
+                    if item == '[TT]':
+                        text[i] = ' [title] \n'
+                    if item == '[PT]':
+                        text[i] = ' [pretitle] \n'        
+                    if item == '[unused8]':
+                        text[i] = ' [content] \n'      
+                    # if item == '[title]':
+                    #     text[i] = '\n标题: '
+                info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
+                print(info)
+                text = ''.join(text).replace('##', '').strip()
+                print(text)
+
+
+                if text in all_text:
+                    # pass
+                    print("重复生成")
+                else: 
+                   all_text.append(text)
+                if args.save_samples:
+                    samples_file.write(info)
+                    samples_file.write(text)
+                    samples_file.write('\n')
+                    samples_file.write('=' * 90)
+                    samples_file.write('\n' * 2)
+        print("=" * 80)
+        del model
+        gc.collect()
+        for x in locals().keys():
+            # print("清理函数内存",locals()[x])
+            del locals()[x]
+        gc.collect()
+        #保存生成的数据
+        tkit.File().mkdir('tmp')
+        data_path="tmp/run_task"+args.tid+".json"
+        print('保存生成',data_path)
+        tjson=tkit.Json(file_path=data_path)
+        tjson.save([{'prefix':args.prefix,'data':all_text}])
+        print("生成内容",len(all_text))
+        return all_text
+
+        if generated == nsamples:
+            # close file when finish writing.
+            if args.save_samples:
+                samples_file.close()
+            break
+    # del model,all_text
+    # gc.collect()
+
+
+
+def ai_title(text='',length=50,nsamples=5,key='默认'):
+    """
+    这里生成kg
+    """
+    print("运行知识提取任务")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
+    parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
+    parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
+    parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
+    parser.add_argument('--temperature', default=0.68, type=float, required=False, help='生成温度')
     parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
     parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
@@ -300,13 +456,14 @@ def ai(text='',length=20,nsamples=5):
                 for i, item in enumerate(text[:-1]):  # 确保英文前后有空格
                     if is_word(item) and is_word(text[i + 1]):
                         text[i] = item + ' '
+                kgs=[]
                 for i, item in enumerate(text):
                     # print(text[i])
                     if item == '[MASK]':
                         text[i] = ''
                     if item == '[CLS]' or item == '[SEP]':
                         # print('缓存')
-                        text[i] = '\n'
+                        text[i] = '[end] \n'
 
                     # [unused5] 标记关键词
                     # [unused6]  标记标题
@@ -314,41 +471,84 @@ def ai(text='',length=20,nsamples=5):
                     # [unused8]  标记正文
                     # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
                     #     text[i] = '\n'
-                    if item == '[TT]':
-                        text[i] = ' [keywords] \n'
-                        print("关键词")
-                    if item == '[TT]':
-                        text[i] = ' [title] \n'
-                    if item == '[PT]':
-                        text[i] = ' [pretitle] \n'        
-                    if item == '[unused8]':
-                        text[i] = ' [content] \n'      
+                    # if item == '[TT]':
+                    #     text[i] = ' [keywords] \n'
+                    #     print("关键词")
+                    # if item == '[TT]':
+                    #     text[i] = ' [title] \n'
+                    # if item == '[PT]':
+                    #     text[i] = ' [pretitle] \n'        
+                    # if item == '[unused8]':
+                    #     text[i] = ' [content] \n'      
+                    # if item == '[kgs]':
+                    #     text[i] = ' [content] \n'     
+                    # if item == '[kgs]':
+                    #     text[i] = ' |||'   
+                    # if item == '[kg]':
+                    #     text[i] = ' |||'  
+                    # if item == '[/kg]':
+                    #     text[i] = ' |||'       
+                    # if item == '[kge]':
+                    #     text[i] = ' |||'    
+                    #     break                                            
                     # if item == '[title]':
                     #     text[i] = '\n标题: '
                 info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
                 print(info)
                 text = ''.join(text).replace('##', '').strip()
-                print(text)
-                if args.remove_prefix:
- 
-                    # remove_prefix_length =len(context_tokens)
-                    # print(remove_prefix_length)
-                    # text=text[remove_prefix_length:]
- 
-                    # prefix_clean =tkit.Text().clear(args.prefix)
-                    print('raw_text',raw_text)
-                    text=text.replace(raw_text,'')
 
+                # text = ''.join(text).replace('##', '').strip()
+                print(text)
+                kg_start='[pt]'
+                kg_end='[/pt]'
+                try:
+                    kg_start_n=text.index(kg_start)
+
+                except :
+                    continue
+                try:
+
+                    kg_end_n=text.index(kg_end)
+                    
+                except :
+                    try:
+                        kg_end_n=text.index('[end]')
+                    except :
+                        continue
+                         
+                text=text[(kg_start_n+4):kg_end_n]         
+
+
+                # text = text.replace('[/kg]', '||').replace('[kg]', '').replace('[kge]', '').strip()
+
+                
+                print("提取到的标题：",text)
+                if args.remove_prefix:
+                    text=text.replace(raw_text,'')
+                tt=tkitText.Text()
                 if text in all_text:
                     pass
                 else: 
-                   all_text.append(text)
-                if args.save_samples:
-                    samples_file.write(info)
-                    samples_file.write(text)
-                    samples_file.write('\n')
-                    samples_file.write('=' * 90)
-                    samples_file.write('\n' * 2)
+                    all_text.append(text)
+                    if len(text)>0:
+                        one_data={"_id":tt.md5(text+key),"title":text,'key':key,'time':time.time()}
+                        #获取之前保存的标题数量  
+                        try:
+                            DB.pre_titles.insert_one(one_data)
+                            pass
+                        except:
+                            pass
+                        else:
+                            pass
+                        pre_data= get_var(key)
+                        num=pre_data['value'].get('num')
+                        if num==None:
+                            pre_data['value']['num']=0
+                        else:
+                            pre_data['value']['num']=pre_data['value']['num']+1
+                        # 保存进程
+                        set_var(key,pre_data['value'])
+
         print("=" * 80)
         del model
         gc.collect()
@@ -356,28 +556,8 @@ def ai(text='',length=20,nsamples=5):
             # print("清理函数内存",locals()[x])
             del locals()[x]
         gc.collect()
-        #保存生成的数据
-        tkit.File().mkdir('tmp')
-        data_path="tmp/run_task"+args.tid+".json"
-        print('保存生成',data_path)
-        tjson=tkit.Json(file_path=data_path)
-        tjson.save([{'prefix':args.prefix,'data':all_text}])
-
+        print("获取的所有标题",all_text)
         return all_text
-
-        if generated == nsamples:
-            # close file when finish writing.
-            if args.save_samples:
-                samples_file.close()
-            break
-    # del model,all_text
-    # gc.collect()
-
-
-
-
-
-
 
 def ai_kg(text='',length=20,nsamples=5):
     """
