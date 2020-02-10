@@ -454,7 +454,7 @@ def json_search(message):
     keyword = message.get('data')
     print("关键词",keyword)
     tt=tkitText.Text()
-
+    set_var(keyword,{'do':'start'})
 
     items=DB.pre_titles.find({'key':keyword})
     titles=[]
@@ -490,10 +490,10 @@ def json_search(message):
         #对于第一次循环获取文章过少的进行停止让后台爬虫结束，当然也可以去查询
         #这样自定义修整时间
         if i==1 and  len(keys)<4:
-            time.sleep(20)
+            time.sleep(20*i)
         response = requests.get(
             'http://0.0.0.0:6801/json/search',
-            params={'keyword': keyword,'limit':4},
+            params={'keyword': keyword,'limit':20},
         )
         print("获取数据",response.status_code,{'keyword': keyword,'limit':4},)
         if response.status_code ==200:
@@ -502,21 +502,31 @@ def json_search(message):
             emit('预测反馈', {'state': 'success','step':'get_articles','data':items})
             # titles=[]
             print("获取数据数目:",len(items))
+            if len(items)>10:
+                nsamples=1
+            else:
+                nsamples=2
             for item in items:
                 text=item['content']
                 key=tt.md5(text)
+                titles=[]
                 if key not in keys:
                     keys.append(key)
                     text=text[:300]+" [pt]"
-                    pre_title=ai_title(text=text,key=keyword)
-                    titles=[]
+                    pre_title=ai_title(text=text,key=keyword,nsamples=nsamples)
                     for it in pre_title:
                        
-                        if item['title'] not in title_keys:
-                            title_keys.append(item['title'])
+                        if it not in title_keys and it != item['title']:
+                            title_keys.append(it)
                             titles.append({"title":it})
                     emit('预测反馈', {'state': 'success','step':'get_titles','data':titles})
 
+@socketio.on('停止预测', namespace='/tapi')
+def stop_pre(message):
+    print('Client disconnected')
+    print('message',message)
+    keyword = message.get('data')
+    set_var(keyword,{'do':'stop'})
 
 @socketio.on('my event', namespace='/tapi')
 def test_message(message):

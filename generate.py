@@ -401,6 +401,14 @@ def ai_title(text='',length=50,nsamples=5,key='默认'):
     parser.add_argument('--tid', default='0', type=str, required=False, help='保存生成内容')
 
     args = parser.parse_args()
+
+    pre_data= get_var(key)
+    if pre_data['value'].get('do')=="stop":
+        print("已经停止")
+        return []
+
+
+
     print('args:\n' + args.__repr__())
 
     if args.no_wordpiece:
@@ -443,6 +451,10 @@ def ai_title(text='',length=50,nsamples=5,key='默认'):
         generated = 0
         all_text=[]
         for _ in range(nsamples // batch_size):
+            pre_data= get_var(key)
+            if pre_data['value'].get('do')=="stop":
+                print("已经停止")
+                return []
             out = generate(
                 model=model,
                 context=context_tokens,

@@ -27,13 +27,7 @@
 </head>
 
 <body>
-  <div id="layout">
-    <header>
-      <h1>Ai  数据构建助手</h1>
-    </header>
  
- 
-  </div>
   <script src="/static/js/jquery.min.js"></script>
   <!-- <script src="/static/editor.md/editormd.min.js"></script> -->
   <script type="text/javascript">
@@ -88,8 +82,8 @@ $(document).ready(function(){
 
       var html='<h4>添加搜索成功</h4>'
         html=html+'<p>status:'+data['status']+'</p>'
-        html=html+'<p>jobid:'+data['jobid']+'</p>'
-        $('#log').append(html)
+        html=html+'<p><a href="http://localhost:6800/logs/default/kgbot/'+data['jobid']+'.log" >jobid:'+data['jobid']+'</a></p>'
+        $('#log').prepend(html)
     }
     function get_articles(data){
       // var html='<h4>添加搜索成功</h4>'
@@ -100,7 +94,7 @@ $(document).ready(function(){
             html=html+'<h4> ' + value['title'] + '</h4>'
             html=html+'<div> ' + value['content'] + '</div>'
           })
-          $('#search_list').append(html)
+          $('#search_list').prepend(html)
     }
     function get_titles(data){
       var html=''
@@ -109,7 +103,7 @@ $(document).ready(function(){
             // $('#log').append('<p>Received: ' + value['title'] + '</p>');
             html=html+'<li class="list-group-item"> ' +  value['title']  + '</li>'
           })
-          $('#search_list_titles').append(html)
+          $('#search_list_titles').prepend(html)
     }
 
     $('form#emit').submit(function(event) {
@@ -120,6 +114,10 @@ $(document).ready(function(){
     $('#search').click(function(event) {
         console.log("点击搜索")
         socket.emit('预测标题', {data: $('#keyword').val()});
+        // 停止之前的预测
+        socket.emit('停止预测',{data: $('#pre_keyword').val()});
+        $("#pre_keyword").val($('#keyword').val())
+
         var html='<li class="list-group-item">开始预测中...</li>'
         $('#search_list_titles').html(html)
         var html='<li class="list-group-item">开始预测中...</li>'
@@ -130,8 +128,8 @@ $(document).ready(function(){
         return false;
     });
 
-    $('form#broadcast').submit(function(event) {
-        socket.emit('my broadcast event', {data: $('#broadcast_data').val()});
+    $('.stop').submit(function(event) {
+        socket.emit('停止预测',{data: $('#keyword').val()});
         return false;
     });
 });
@@ -297,16 +295,18 @@ function pre_title(data){
     <!-- Content here -->
     <div class="jumbotron jumbotron-fluid">
       <div class="container text-c">
-        <h1 class="display-4">搜索</h1>
+        <h1 class="display-4">输入关键词生成标题</h1>
     
           <div class="form-row align-items-center">
             <div class="col-sm-9 my-1">
  
               <input id="keyword" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
+              <input id="pre_keyword" type="hidden" class="form-control" id="inlineFormInputName" placeholder="之前关键词">
             </div>
              
             <div class="col-auto my-1">
-              <button id='search' type="submit" class="btn btn-primary">搜索</button>
+              <button id='search' type="submit" class="btn btn-primary">Ai生成</button>
+              <button id='search_stop' type="submit" class="btn btn-danger stop">停止预测</button>
             </div>
           </div>
  
