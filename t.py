@@ -43,8 +43,10 @@ def build_files(data_path, tokenized_data_path, num_pieces, full_tokenizer, min_
             for id in full_line:
                 f.write(str(id) + ' ')
     print('finish')
-full_tokenizer = tokenization_bert.BertTokenizer(vocab_file='cache/vocab_small_terry_ai.txt',do_lower_case=True)
-# build_files("data/train.json",'temp',100,full_tokenizer,64)
+# full_tokenizer = tokenization_bert.BertTokenizer(vocab_file='cache/vocab_small_terry_ai.txt')
+full_tokenizer = tokenization_bert.BertTokenizer(vocab_file='cache/vocab_small_terry_ai.txt')
+ 
+build_files("data/train.json",'temp/',100,full_tokenizer,64)
 
 line=" [TT] 【宠物狗/狗狗品种/宠物狗价格/宠物狗品种图片大全】- 赶集网 [/TT]    * **泰迪犬** [PAD]  [SEP] 英文名：toy poodl "
 print(full_tokenizer.tokenize(text=line))

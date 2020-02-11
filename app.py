@@ -450,10 +450,17 @@ def addword(message):
     """
     print('message',message)
     keyword = message.get('data')
+    url_type = message['url_type']
+    print('url_type',url_type)
     response = requests.post(
         'http://localhost:6800/schedule.json',
-        params={'keyword': keyword,'project':'default','spider':'kgbot'},
+        params={'keyword': keyword,'project':'default','spider':'kgbot',"url_type":url_type},
         )
+    try:
+        DB.keywords.insert_one({"_id":keyword,'value':keyword})
+        print('添加关键词',keyword)
+    except :
+        pass
     if response.status_code ==200:
         print("提交进程",response.json())
         #修改状态为提交搜索成功
@@ -470,6 +477,7 @@ def json_search(message):
     """
     print('message',message)
     keyword = message.get('data')
+
 
 
     print("关键词",keyword)
@@ -497,8 +505,13 @@ def json_search(message):
     # http://localhost:6800/schedule.json&project=default&spider=kgbot&setting=DOWNLOAD_DELAY=2&keyword="宠物狗"
     response = requests.post(
         'http://localhost:6800/schedule.json',
+        # params={'keyword': keyword,'project':'default','spider':'kgbot',"url_type":'bytime'},
         params={'keyword': keyword,'project':'default','spider':'kgbot'},
     )
+    try:
+        DB.keywords.insert_one({"_id":keyword,'value':keyword})
+    except :
+        pass
     if response.status_code ==200:
         print("提交进程",response.json())
         #修改状态为提交搜索成功

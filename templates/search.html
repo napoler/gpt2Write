@@ -157,9 +157,13 @@ $(document).ready(function(){
     });
 
     $('#addword').click(function(event) {
-        socket.emit('添加关键词',{data: $('#keyword').val()});
+      
+        socket.emit('添加关键词',{data: $('#keyword').val(),'url_type':$('#url_type').val()});
         return false;
     });
+
+
+
 });
  
 $(document).on('click', '.tags', function () {
@@ -337,9 +341,18 @@ function pre_title(data){
     
           <div class="form-row align-items-center">
             <div class="col-sm-9 my-1">
- 
+              <div class="form-group">
               <input id="keyword" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
               <input id="pre_keyword" type="hidden" class="form-control" id="inlineFormInputName" placeholder="之前关键词">
+            </div>
+              <div class="form-group">
+                <label for="exampleFormControlSelect2">Example multiple select</label>
+                <select id="url_type" class="form-control" id="exampleFormControlSelect2">
+                  <option value="" >默认资讯</option>
+                  <option value="bytime">bytime</option>
+                  <option value="all">百度搜索</option>
+                </select>
+              </div>
             </div>
              
             <div class="col-auto my-1">
