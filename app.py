@@ -10,7 +10,7 @@ import subprocess
 import  requests
 from pprint import  pprint
 from flask_socketio import SocketIO, emit
-
+import jieba.analyse
 
 import tkitMarker,tkitDb,tkitText
 import os
@@ -442,6 +442,24 @@ def json_bulid_train():
     return jsonify(data)
 import time
 
+# @app.route("/json/search",methods=['GET'])
+@socketio.on('添加关键词', namespace='/tapi')
+def addword(message):
+    """
+    构建训练数据
+    """
+    print('message',message)
+    keyword = message.get('data')
+    response = requests.post(
+        'http://localhost:6800/schedule.json',
+        params={'keyword': keyword,'project':'default','spider':'kgbot'},
+        )
+    if response.status_code ==200:
+        print("提交进程",response.json())
+        #修改状态为提交搜索成功
+        emit('预测反馈', {'state': 'success','step':'add','data':response.json()})
+    else:
+        emit('预测反馈', {'state': 'fail','step':'add','data':response.json()})
 
             
 # @app.route("/json/search",methods=['GET'])
@@ -452,6 +470,8 @@ def json_search(message):
     """
     print('message',message)
     keyword = message.get('data')
+
+
     print("关键词",keyword)
     tt=tkitText.Text()
     set_var(keyword,{'do':'start'})
@@ -461,7 +481,9 @@ def json_search(message):
     title_keys=[]
     for item in items:
         # print(item)
-        titles.append({"title":item['title']})
+        p = rankclass.pre(item['title'])
+        softmax=rankclass.softmax()
+        titles.append({"title":item['title'],'rank':p,'softmax':softmax})
         if item['title'] not in title_keys:
             title_keys.append(item['title'])
     # data={"items":titles,"limit":20}
@@ -504,21 +526,35 @@ def json_search(message):
             print("获取数据数目:",len(items))
             if len(items)>10:
                 nsamples=1
-            else:
+            elif 5<len(items)<10:
                 nsamples=2
+            else:
+                nsamples=5
             for item in items:
                 text=item['content']
+                keywords=jieba.analyse.extract_tags(text, topK=10, withWeight=False, allowPOS=())
+                emit('预测反馈', {'state': 'success','step':'keywords','data':keywords})
                 key=tt.md5(text)
                 titles=[]
                 if key not in keys:
+                    pre_data= get_var(keyword)
+                    if pre_data['value'].get('do')=="stop":
+                        print("已经停止")
+                        break
                     keys.append(key)
                     text=text[:300]+" [pt]"
                     pre_title=ai_title(text=text,key=keyword,nsamples=nsamples)
+                    # cmd = "python3 ./generate.py --prefix '''"+text+"''' --length " +str(50)+" --nsamples "+str(nsamples)+" --tid "+str(tid)
+                    # print("开始处理: "+cmd)
+                    # # print(subprocess.call(cmd, shell=True))
+                    # if subprocess.call(cmd, shell=True)==0:
                     for it in pre_title:
                        
                         if it not in title_keys and it != item['title']:
                             title_keys.append(it)
-                            titles.append({"title":it})
+                            p = rankclass.pre(it)
+                            softmax=rankclass.softmax()
+                            titles.append({"title":it,'rank':p,'softmax':softmax})
                     emit('预测反馈', {'state': 'success','step':'get_titles','data':titles})
 
 @socketio.on('停止预测', namespace='/tapi')

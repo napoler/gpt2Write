@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import pymongo
+from albert_pytorch import classify
 
 
 #这里定义mongo数据
@@ -31,5 +32,5 @@ def get_var(key):
         return {'_id':key,'value':{}}
     else:
         return data
-
+rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3)
 

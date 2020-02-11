@@ -92,3 +92,11 @@ body {
 .btns button:hover, .btn:hover {
     /* background: #f6f6f6; */
 }
+
+li.list-group-item.rank_2 {
+    background: #c4ea36;
+}
+
+li.list-group-item.rank_1 {
+    background: #dce4c8;
+}

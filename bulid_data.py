@@ -14,7 +14,7 @@ from tqdm import tqdm
 import re
 import argparse
 
-
+from config import  *
 
 from sumy.parsers.html import HtmlParser
 from sumy.parsers.plaintext import PlaintextParser
@@ -31,7 +31,7 @@ import json
 from jieba import analyse
 from harvesttext import HarvestText
 
-
+import pymongo
 
 
 
@@ -213,7 +213,105 @@ def data_pre_train( data_path='data/data.json',train_path='data/train.txt' ):
 
         gc.collect()
         return
+def cut_text(text,lenth):
+    """
+    分割固定长度字符串
+    """
+    textArr = re.findall('.{'+str(lenth)+'}', text)
+    textArr.append(text[(len(textArr)*lenth):])
+    return textArr
 
+def data_pre_train_mongo( data_path='data/data.json',train_path='data/train_db.txt' ):
+    """
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+    [unused5] 标记关键词
+      [unused6]  标记标题
+    [unused7]  标记前文标题
+       [unused8]  标记正文
+    """
+    LANGUAGE = "chinese"
+    SENTENCES_COUNT = 10
+    article_max_len=500
+    ttext=tkitText.Text()
+
+
+    stemmer = Stemmer(LANGUAGE)
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words(LANGUAGE)
+    # ie=tkitNlp.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
+    f1 = open(train_path,'w')
+    articles=[]
+    # 引入TF-IDF关键词抽取接口
+    tfidf = analyse.extract_tags
+    # 引入TextRank关键词抽取接口
+    textrank = analyse.textrank
+    #这里定义mongo数据
+    client = pymongo.MongoClient("localhost", 27017)
+    DB_kg_scrapy = client.kg_scrapy
+    print(DB.name)
+    q={}
+    # print('q',q)
+    for item in DB_kg_scrapy.kg_content.find(q):
+        # print(item)
+        content=" [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+        content=content.replace("\n\n\n", "\n\n")
+        content=content.replace("\n", " [SEP] ")
+        content_list=cut_text(content,480)
+        # for it in content_list:
+        #     print("++++"*20)
+        #     print(it)
+        # f1.write("\n".join(content_list)+"")
+        f1.write(content)
+        f1.write("\n")
+        #     print(len(it))
+
+
+    # with open(data_path, 'r', encoding = 'utf-8') as data:
+    #     for art_i,it in tqdm(enumerate(data)):
+    #         item=json.loads(it[:-1])
+    #         # if art_i%10==0:
+    #         #     print('arti', art_i)
+    #         segs_pre=[]
+    #         segs_end=[]
+
+    #         s=[]      
+
+    #         keywords = textrank(item['title']+'\n'+item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v')) 
+      
+    #         segs_pre.append(' [KW] '+'，'.join(keywords)+' [/KW] ')
+
+    #         try:
+    #             segs_pre.append(' [TT] '+item['title']+" [/TT] ")
+    #             segs_end.append(' [PT] '+item['title']+" [/PT] ")
+    #         except:
+    #             pass
+    #         segs=sentence_seg(" [CLS] "+item['content']+" [END] ")
+    #         article="".join(segs_pre+segs+segs_end)
+            
+    #         one=[]
+    #         for i in range(len(article)//article_max_len+1):
+    #             #截取内容
+    #             one.append(article[i*article_max_len:(i+1)*article_max_len]+"")
+    #         articles.append("\n".join(one)+"")
+    #         if art_i%100==0:
+    #             print('arti', art_i)
+    #             # f1.write("\n\n".join(articles)+"\n\n")
+    #             f1.write("\n\n".join(articles)+"")
+    #             articles=[]
+    #         # del articles
+    #         del segs
+    #     f1.write("\n\n".join(articles)+"")
+    #     f1.close()
+    #     gc.collect()
+    #     del stemmer
+    #     del summarizer
+    #     del ie
+
+
+    #     gc.collect()
+    #     return
 
 
         # articles_num=art_i+1
@@ -302,7 +400,8 @@ def main():
         csv_list()
     elif args.do == 'data_pre_train_file':
         data_pre_train_file('./data/')
-
+    elif  args.do=='data_pre_train_mongo':
+        data_pre_train_mongo()
 
 if __name__ == '__main__':
     main()

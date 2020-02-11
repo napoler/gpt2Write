@@ -66,6 +66,9 @@ $(document).ready(function(){
             case 'get_titles':
             get_titles(msg.data)
              break;
+             case 'keywords':
+              get_keywords(msg.data)
+              break;
             default:
               // code block
           }
@@ -92,18 +95,31 @@ $(document).ready(function(){
             // keywords_text=keywords_text+value['word']+"，"
             // $('#log').append('<p>Received: ' + value['title'] + '</p>');
             html=html+'<h4> ' + value['title'] + '</h4>'
-            html=html+'<div> ' + value['content'] + '</div>'
+            // html=html+'<div> ' + value['content'] + '</div>'
+            html=html+'<div> ' + value['highlights'] + '</div>'
           })
           $('#search_list').prepend(html)
     }
-    function get_titles(data){
-      var html=''
+    
+    function get_keywords(data){
+      var html='</br></br>'
         $.each(data, function (index,value){
             // keywords_text=keywords_text+value['word']+"，"
             // $('#log').append('<p>Received: ' + value['title'] + '</p>');
-            html=html+'<li class="list-group-item"> ' +  value['title']  + '</li>'
+            html=html+'<button type="button"class="badge badge-dark tags">' +  value  + '</button> '
           })
-          $('#search_list_titles').prepend(html)
+          $('#get_keywords').prepend(html)
+    }
+
+    function get_titles(data){
+      // var html=''
+        $.each(data, function (index,value){
+            // keywords_text=keywords_text+value['word']+"，"
+            // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+            html='<li class="list-group-item rank_'+value['rank']+'">('+value['rank']+' 概率：'+value['softmax'][value['rank']]+') ' +  value['title']  + '</li>'
+            $('#search_list_titles'+value['rank']).prepend(html)
+          })
+          
     }
 
     $('form#emit').submit(function(event) {
@@ -115,25 +131,44 @@ $(document).ready(function(){
         console.log("点击搜索")
         socket.emit('预测标题', {data: $('#keyword').val()});
         // 停止之前的预测
-        socket.emit('停止预测',{data: $('#pre_keyword').val()});
+        if  ($('#pre_keyword').val()=== $('#keyword').val()){
+          socket.emit('停止预测',{data: $('#pre_keyword').val()});
+        }
+        
         $("#pre_keyword").val($('#keyword').val())
 
         var html='<li class="list-group-item">开始预测中...</li>'
-        $('#search_list_titles').html(html)
+        
         var html='<li class="list-group-item">开始预测中...</li>'
         $('#search_list').html(html)
+        $('#search_list_titles0').html(html)
+        $('#search_list_titles1').html(html)
+        $('#search_list_titles2').html(html)
+        $('#keywords').html(html)
         
 
 
         return false;
     });
 
-    $('.stop').submit(function(event) {
+    $('.stop').click(function(event) {
         socket.emit('停止预测',{data: $('#keyword').val()});
+        return false;
+    });
+
+    $('#addword').click(function(event) {
+        socket.emit('添加关键词',{data: $('#keyword').val()});
         return false;
     });
 });
  
+$(document).on('click', '.tags', function () {
+var tag=$(this).text()
+var keyword=$("#keyword").val()
+$("#keyword").val(keyword+" "+tag)
+
+})
+
 // // 提交内容
 // $(document).on('click', '.add_post', function () {
 //       var title = $("#title").val()
@@ -291,7 +326,10 @@ function pre_title(data){
     //         })
 
   </script>
-  <div class="container">
+<div class="container-fluid">
+
+<div class="row">
+  <div class="col col-lg-8">
     <!-- Content here -->
     <div class="jumbotron jumbotron-fluid">
       <div class="container text-c">
@@ -307,46 +345,47 @@ function pre_title(data){
             <div class="col-auto my-1">
               <button id='search' type="submit" class="btn btn-primary">Ai生成</button>
               <button id='search_stop' type="submit" class="btn btn-danger stop">停止预测</button>
+              <button id='addword' type="submit" class="btn btn-danger addword">后台搜索素材</button>
+              
             </div>
           </div>
  
 
       </div>
     </div>
+
+
     <h2>标题</h2>
-<ol id="search_list_titles" class="list-group">
-
-
+<ol id="search_list_titles2" class="list-group">
 </ol>
+<ol id="search_list_titles1" class="list-group">
+</ol>
+<ol id="search_list_titles0" class="list-group">
+</ol>
+
+
 <h2>文章</h2>
     <ul  id="search_list" class="list-group  list-group-flush">
 
     </ul>
 
+  </div>
+  <div class="col col-lg-2">
+    <div id="get_keywords">
+    </div>
+  </div>
+  <div class="col col-lg-2">
 
 
-
-
-
-
-    <h1>Flask-SocketIO Test</h1>
-    <p>Async mode is: <b>{{ async_mode }}</b></p>
-    <p>Average ping/pong latency: <b><span id="ping-pong"></span>ms</b></p>
-    <h2>Send:</h2>
-    <form id="emit" method="POST" action='#'>
-        <input type="text" name="emit_data" id="emit_data" placeholder="Message">
-        <input type="submit" value="Echo">
-    </form>
  
-    <form id="disconnect" method="POST" action="#">
-        <input type="submit" value="Disconnect">
-    </form>
-    <h2>ai标题推荐:</h2>
+    <h2>日志:</h2>
     <div id="log"></div>
 
 
+  </div>
 
 
+</div>
   </div>
  
  
