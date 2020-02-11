@@ -236,10 +236,10 @@ def ai(text='',length=20,nsamples=5):
     # parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
     #                     help='模型参数')
     # parser.add_argument('--tokenizer_path', default='cache/vocab_small.txt', type=str, required=False, help='词表路径')
-    parser.add_argument('--model_config', default='config/model_config.json', type=str, required=False,
+    parser.add_argument('--model_config', default='model/mini/config.json', type=str, required=False,
                         help='模型参数')
-    parser.add_argument('--tokenizer_path', default='cache/vocab.txt', type=str, required=False, help='词表路径')
-    parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
+    parser.add_argument('--tokenizer_path', default='model/mini/vocab.txt', type=str, required=False, help='词表路径')
+    parser.add_argument('--model_path', default='model/mini', type=str, required=False, help='模型路径')
     parser.add_argument('--prefix', default=text, type=str, required=False, help='生成文章的开头')
     parser.add_argument('--remove_prefix', default=True, required=False, help='移除头部')
     parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
@@ -299,6 +299,7 @@ def ai(text='',length=20,nsamples=5):
                 is_fast_pattern=args.fast_pattern,
                 temperature=temperature, top_k=topk, top_p=topp, device=device
             )
+
             for i in range(batch_size):
                 generated += 1
                 text = tokenizer.convert_ids_to_tokens(out)
@@ -309,13 +310,17 @@ def ai(text='',length=20,nsamples=5):
                     # print('raw_text',raw_text)
                     text=text[-length:]
                     # print('text',text)
+                data={'do':'text','text':''}
+
                 for i, item in enumerate(text):
                     # print(text[i])
+                    print(item)
                     if item == '[MASK]':
                         text[i] = ''
-                    if item == '[CLS]' or item == '[SEP]':
+                    elif item == '[CLS]' or item == '[SEP]':
                         # print('缓存')
                         text[i] = '\n'
+                        data['do']="text"
 
                     # [unused5] 标记关键词
                     # [unused6]  标记标题
@@ -323,15 +328,21 @@ def ai(text='',length=20,nsamples=5):
                     # [unused8]  标记正文
                     # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
                     #     text[i] = '\n'
-                    if item == '[TT]':
-                        text[i] = ' [keywords] \n'
-                        print("关键词")
-                    if item == '[TT]':
+                    elif item == '[PT]':
+                        print("获取pt")
+                        text[i] = ''
+                        data['pt']=''
+                        data['do']='pt'
+                    elif item == '[/pt]':
+                        data['do']='text'
+
+                    elif item == '[TT]':
                         text[i] = ' [title] \n'
-                    if item == '[PT]':
-                        text[i] = ' [pretitle] \n'        
-                    if item == '[unused8]':
-                        text[i] = ' [content] \n'      
+                    else:
+                        data[data['do']]=data[data['do']]+item
+                print(data)
+
+
                     # if item == '[title]':
                     #     text[i] = '\n标题: '
                 info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"

@@ -102,7 +102,7 @@ class BertTokenizer(PreTrainedTokenizer):
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
 
-    def __init__(self, vocab_file, do_lower_case=True, do_basic_tokenize=True, never_split=None,
+    def __init__(self, vocab_file, do_lower_case=True, do_basic_tokenize=True, never_split=[],
                  unk_token="[UNK]", sep_token="[SEP]", pad_token="[PAD]", cls_token="[CLS]",
                  mask_token="[MASK]", tokenize_chinese_chars=True, **kwargs):
         """Constructs a BertTokenizer.
@@ -130,13 +130,15 @@ class BertTokenizer(PreTrainedTokenizer):
                 "Can't find a vocabulary file at path '{}'. To load the vocabulary from a Google pretrained "
                 "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file))
         self.vocab = load_vocab(vocab_file)
+        # print(list(self.vocab))
         self.ids_to_tokens = collections.OrderedDict(
             [(ids, tok) for tok, ids in self.vocab.items()])
         self.do_basic_tokenize = do_basic_tokenize
         if do_basic_tokenize:
             self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case,
-                                                  never_split=never_split,
+                                                  never_split=never_split+list(self.vocab),
                                                   tokenize_chinese_chars=tokenize_chinese_chars)
+        # print(self.basic_tokenizer )                                          
         self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab, unk_token=self.unk_token)
 
     @property
@@ -217,6 +219,7 @@ class BasicTokenizer(object):
                 This should likely be desactivated for Japanese:
                 see: https://github.com/huggingface/pytorch-pretrained-BERT/issues/328
         """
+        # print('never_split',never_split)
         if never_split is None:
             never_split = []
         self.do_lower_case = do_lower_case
@@ -233,7 +236,9 @@ class BasicTokenizer(object):
                 Now implemented directly at the base class level (see :func:`PreTrainedTokenizer.tokenize`)
                 List of token not to split.
         """
+
         never_split = self.never_split + (never_split if never_split is not None else [])
+        # print(never_split)
         text = self._clean_text(text)
         # This was added on November 1st, 2018 for the multilingual and Chinese
         # models. This is also applied to the English models now, but it doesn't
@@ -243,14 +248,17 @@ class BasicTokenizer(object):
         # words in the English Wikipedia.).
         if self.tokenize_chinese_chars:
             text = self._tokenize_chinese_chars(text)
+        # print(text)
         orig_tokens = whitespace_tokenize(text)
         split_tokens = []
+        # print('orig_tokens',orig_tokens)
         for token in orig_tokens:
+            # print(token)
             if self.do_lower_case and token not in never_split:
                 token = token.lower()
                 token = self._run_strip_accents(token)
-            split_tokens.extend(self._run_split_on_punc(token))
-
+            split_tokens.extend(self._run_split_on_punc(text=token,never_split=never_split))
+        # print(split_tokens)
         output_tokens = whitespace_tokenize(" ".join(split_tokens))
         return output_tokens
 
@@ -361,7 +369,7 @@ class WordpieceTokenizer(object):
         Returns:
           A list of wordpiece tokens.
         """
-
+        # print("2111")
         output_tokens = []
         for token in whitespace_tokenize(text):
             chars = list(token)

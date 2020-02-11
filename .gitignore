@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 tmp/*
+temp/*
 model/*
 data/*
 *.*~
