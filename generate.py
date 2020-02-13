@@ -12,7 +12,7 @@ from config import  *
 import subprocess
 import  time
 import os
-
+from pprint import pprint
 def is_word(word):
     for item in list(word):
         if item not in 'qwertyuiopasdfghjklzxcvbnm':
@@ -75,23 +75,40 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
     return logits
 
 
-def sample_sequence(model, context, length, temperature=1, top_k=0, top_p=0.0, device='cpu'):
+def sample_sequence(model, context,end, length, temperature=1, top_k=0, top_p=0.0, device='cpu'):
     context = torch.tensor(context, dtype=torch.long, device=device)
     context = context.unsqueeze(0)
+    end = torch.tensor(end, dtype=torch.long, device=device)
     generated = context
+    generated_out=torch.tensor([], dtype=torch.long, device=device)
     with torch.no_grad():
         for _ in trange(length):
+            # print('generated',generated)
+            if len(generated[0])==512:
+                # print(len(generated[0]))
+                generated=generated[:,-510:]
+            else:
+                # print(len(generated[0]))
+                pass
+
             inputs = {'input_ids': generated}
             outputs = model(
                 **inputs)  # Note: we could also use 'past' with GPT-2/Transfo-XL/XLNet (cached hidden-states)
             next_token_logits = outputs[0][0, -1, :] / temperature
             filtered_logits = top_k_top_p_filtering(next_token_logits, top_k=top_k, top_p=top_p)
             next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
+            # print("next_token.unsqueeze(0)",end,next_token.unsqueeze(0)[0])
             generated = torch.cat((generated, next_token.unsqueeze(0)), dim=1)
-    return generated.tolist()[0]
+            generated_out= torch.cat((generated_out, next_token.unsqueeze(0)), dim=1)
+
+            #设置自动停止
+            if next_token.unsqueeze(0)[0] in end :
+                break
+    # return generated.tolist()[0]
+    return generated_out.tolist()[0]
 
 
-def fast_sample_sequence(model, context, length, temperature=1, top_k=0, top_p=0.0, device='cpu'):
+def fast_sample_sequence(model, context,end, length, temperature=1, top_k=0, top_p=0.0, device='cpu'):
     inputs = torch.LongTensor(context).view(1, -1).to(device)
     if len(context) > 1:
         _, past = model(inputs[:, :-1], None)[:2]
@@ -100,25 +117,35 @@ def fast_sample_sequence(model, context, length, temperature=1, top_k=0, top_p=0
         past = None
         prev = inputs
     generate = [] + context
+    generated_out=[]
     with torch.no_grad():
         for i in trange(length):
+            # print("prev",prev)
+            # print("past",len(past))
             output = model(prev, past=past)
             output, past = output[:2]
             output = output[-1].squeeze(0) / temperature
             filtered_logits = top_k_top_p_filtering(output, top_k=top_k, top_p=top_p)
             next_token = torch.multinomial(torch.softmax(filtered_logits, dim=-1), num_samples=1)
+            # print("next_token.item()",end,next_token.item())
             generate.append(next_token.item())
+            generated_out.append(next_token.item())
             prev = next_token.view(1, 1)
-    return generate
+            #设置自动停止
+            if next_token.item() in end:
+                break
+            # print(prev)
+    # return generate
+    return generated_out
 
 
 # 通过命令行参数--fast_pattern，指定模式
-def generate(model, context, length, temperature=1, top_k=0, top_p=0.0, device='cpu', is_fast_pattern=False):
+def generate(model, context,end, length, temperature=1, top_k=0, top_p=0.0, device='cpu', is_fast_pattern=False):
     if is_fast_pattern:
-        return fast_sample_sequence(model, context, length, temperature=temperature, top_k=top_k, top_p=top_p,
+        return fast_sample_sequence(model, context,end, length, temperature=temperature, top_k=top_k, top_p=top_p,
                                     device=device)
     else:
-        return sample_sequence(model, context, length, temperature=temperature, top_k=top_k, top_p=top_p, device=device)
+        return sample_sequence(model, context,end, length, temperature=temperature, top_k=top_k, top_p=top_p, device=device)
 
 
 def main():
@@ -179,10 +206,12 @@ def main():
         raw_text = args.prefix
         context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
         generated = 0
+        end=[]
         for _ in range(nsamples // batch_size):
             out = generate(
                 model=model,
                 context=context_tokens,
+                end=end,
                 length=length,
                 is_fast_pattern=args.fast_pattern,
                 temperature=temperature, top_k=topk, top_p=topp, device=device
@@ -248,7 +277,8 @@ def ai(text='',length=20,nsamples=5):
     parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
     parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
     parser.add_argument('--tid', default='0', type=str, required=False, help='保存生成内容')
-
+    parser.add_argument('--end', default='[/PT]', type=str, required=False, help="提前结束词")
+    parser.add_argument('--start', default='', type=str, required=False, help="设置开始预测词")
     args = parser.parse_args()
     print('args:\n' + args.__repr__())
 
@@ -276,68 +306,100 @@ def ai(text='',length=20,nsamples=5):
 
     if length == -1:
         length = model.config.n_ctx - len(args.prefix)
-    elif length > model.config.n_ctx - len(args.prefix):
-        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
-        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
-        print("输入内容过长自动裁切,方便生成足够数据")
-        args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
+    # elif length > model.config.n_ctx - len(args.prefix):
+    #     # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+    #     # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+    #     print("输入内容过长自动裁切,方便生成足够数据")
+    #     args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
+    # if args.fast_pattern and length > model.config.n_ctx - len(args.prefix):
+    #     args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
+
+
     if args.save_samples:
         if not os.path.exists(args.save_samples_path):
             os.makedirs(args.save_samples_path)
-        samples_file = open(args.save_samples_path + '/samples.txt', 'w', encoding='utf8')
+        # samples_file = open(args.save_samples_path + '/samples.txt', 'w', encoding='utf8')
     while True:
-        raw_text = args.prefix
+        raw_text = args.prefix+""+args.start
+
+        if model.config.n_ctx  < len(args.prefix):
+            raw_text=raw_text[-(model.config.n_ctx-3):]
         # raw_text =tkit.Text().clear(args.prefix+'')
         context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
         generated = 0
         all_text=[]
-        for _ in range(nsamples // batch_size):
-            out = generate(
-                model=model,
-                context=context_tokens,
-                length=length,
-                is_fast_pattern=args.fast_pattern,
-                temperature=temperature, top_k=topk, top_p=topp, device=device
-            )
+        end=['[END]']
+        if args.start!="":
+            end.append(args.start)
 
+        end = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(" ".join(end)))
+        for _ in range(nsamples // batch_size):
+            if args.fast_pattern:
+                new=[]
+                while len(new)<length:
+                    if len(context_tokens)>400:
+                        
+                        context_tokens=context_tokens[-400:]
+                    out = generate(
+                        model=model,
+                        context=context_tokens,
+                        end=end,
+                        length=100,
+                        is_fast_pattern=args.fast_pattern,
+                        temperature=temperature, top_k=topk, top_p=topp, device=device
+                    )
+                    context_tokens=context_tokens+out
+                    new=new+out
+                out=new
+            else:
+                out = generate(
+                    model=model,
+                    context=context_tokens,
+                    end=end,
+                    length=length,
+                    is_fast_pattern=args.fast_pattern,
+                    temperature=temperature, top_k=topk, top_p=topp, device=device
+                )                
+            print('out',out)
             for i in range(batch_size):
                 generated += 1
                 text = tokenizer.convert_ids_to_tokens(out)
+                text=[args.start]+text
+                print("text11",text)
                 for i, item in enumerate(text[:-1]):  # 确保英文前后有空格
                     if is_word(item) and is_word(text[i + 1]):
                         text[i] = item + ' '
-                if args.remove_prefix:
-                    # print('raw_text',raw_text)
-                    text=text[-length:]
+                # if args.remove_prefix:
+                #     # print('raw_text',raw_text)
+                #     text=text[-length:]
                     # print('text',text)
                 data={'do':'text','text':''}
-
+                print("text",text)
                 for i, item in enumerate(text):
                     # print(text[i])
-                    print(item)
+                   
                     if item == '[MASK]':
                         text[i] = ''
-                    elif item == '[CLS]' or item == '[SEP]':
+                    elif item == '[CLS]' or item == '[SEP]'  or item == '[END]':
                         # print('缓存')
                         text[i] = '\n'
                         data['do']="text"
-
-                    # [unused5] 标记关键词
-                    # [unused6]  标记标题
-                    # [unused7]  标记前文标题  
-                    # [unused8]  标记正文
-                    # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
-                    #     text[i] = '\n'
                     elif item == '[PT]':
-                        print("获取pt")
+                        # print("获取pt")
                         text[i] = ''
                         data['pt']=''
                         data['do']='pt'
-                    elif item == '[/pt]':
-                        data['do']='text'
-
+                    elif item == '[/PT]':
+                        data['do']='none'
+                        text[i] = ''
                     elif item == '[TT]':
-                        text[i] = ' [title] \n'
+                        # print("获取pt")
+                        text[i] = ''
+                        data['tt']=''
+                        data['do']='tt'
+                    elif item == '[/TT]':
+                        data['do']='tt'
+                        text[i] = ''
                     else:
                         data[data['do']]=data[data['do']]+item
                 print(data)
@@ -472,9 +534,11 @@ def ai_title(text='',length=50,nsamples=5,key='默认'):
             if pre_data['value'].get('do')=="stop":
                 print("已经停止")
                 return []
+            end=[]
             out = generate(
                 model=model,
                 context=context_tokens,
+                end=end,
                 length=length,
                 is_fast_pattern=args.fast_pattern,
                 temperature=temperature, top_k=topk, top_p=topp, device=device
@@ -656,10 +720,12 @@ def ai_kg(text='',length=20,nsamples=5):
         context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
         generated = 0
         all_text=[]
+        end=[]
         for _ in range(nsamples // batch_size):
             out = generate(
                 model=model,
                 context=context_tokens,
+                end=end,
                 length=length,
                 is_fast_pattern=args.fast_pattern,
                 temperature=temperature, top_k=topk, top_p=topp, device=device

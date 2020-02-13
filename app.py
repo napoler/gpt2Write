@@ -341,7 +341,7 @@ def json_get_ner():
     对文本进行标记 发现实体 用来获取知识信息
     """
     data= get_post_data()
-    P=tkitMarker.Pre()
+    P=get_ner()
     
     # print(result)
     # keywords=ttext.get_keywords(data['text'],num=40)
