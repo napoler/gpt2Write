@@ -16,7 +16,9 @@ print(DB.name)
 
 
 
-
+Word2vec_model='/mnt/data/dev/github/w2vec关键词抽取/keyextract_word2vec/model/word2vec_demo.model'
+Word2vec_model_WV='/mnt/data/dev/github/w2vec关键词抽取/keyextract_word2vec/model/word2vec_demo.vector.model'
+Word2vec_model_save_fast='/mnt/data/dev/github/w2vec关键词抽取/keyextract_word2vec/model/word2vec_demo.vector.fast.model'
 def get_p():
     # import tkitFile
     P = Pre()
@@ -81,6 +83,28 @@ def get_ner():
 
 
 
+def set_temp(key,vaule):
+    """
+    保存对象
+    vaule为对象
+    """
+    try:
+        DB.runvar.insert_one({"_id":key,'value':vaule}) 
+    except :
+        # del vaule['_id']
+        DB.runvar.update_one({'_id':key},   {"$set" :{"_id":key,'value':vaule}}) 
+def get_temp(key):
+    """
+    获取对象
+    """
+    data=DB.runvar.find_one({'_id':key})
+    if data==None:
+        return {'_id':key,'value':{}}
+    else:
+        return data
+
+
+
 
 
 
@@ -103,5 +127,5 @@ def get_var(key):
         return {'_id':key,'value':{}}
     else:
         return data
-rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3)
+
 

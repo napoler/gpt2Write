@@ -69,6 +69,10 @@ $(document).ready(function(){
              case 'keywords':
                 get_keywords(msg.data)
                 break;
+              case 'wordexplore':
+              wordexplore(msg.data)
+                break;
+                
               case 'log':
                 log(msg.data)
                 break;
@@ -130,7 +134,20 @@ $(document).ready(function(){
           $('#get_keywords').prepend(html)
           $('#get_keywords_one').html(html_one)
     }
+    function wordexplore(data){
+      var keyword=$('#keyword').val()
+      var html='<h3>探索：'+keyword+"</h3>"
+        $.each(data, function (index,value){
+            // keywords_text=keywords_text+value['word']+"，"
+            // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+            html=html+'<button type="button"class="badge badge-dark tags">' +  value  + '</button> '
 
+          })
+          $('#get_wordexplore').prepend(html)
+          // $('#get_keywords_one').html(html_one)
+    }
+
+    
     function get_titles(data){
       // var html=''
         $.each(data, function (index,value){
@@ -181,6 +198,11 @@ $(document).ready(function(){
         socket.emit('添加关键词',{data: $('#keyword').val(),'url_type':$('#url_type').val()});
         return false;
     });
+    $('#wordexplore').click(function(event) {
+      
+      socket.emit('关键词探索',{data: $('#keyword').val(),'url_type':$('#url_type').val()});
+      return false;
+  });
 
 
 
@@ -192,117 +214,6 @@ var keyword=$("#keyword").val()
 $("#keyword").val(keyword+" "+tag)
 
 })
-
-// // 提交内容
-// $(document).on('click', '.add_post', function () {
-//       var title = $("#title").val()
-//       if (title == "" || title == null || title== undefined){
-
-//       }else{
-//         title=title+""
-//       }
-//       var keywords =$("#keywords").val()
-//       var content = $("#content").val()
-//       var contentfull=title+content
-//       console.log(keywords)
-//       if (keywords == "" || keywords == null || keywords== undefined){
-
-//         console.log('没有关键词自动获取')
-//         $.post("/json/get/keywords", {
-//         // 'text': text + "", 'plen': plen, 'n': n
-//           'text': contentfull
-
-//       })
-//         .done(function (data) {
-//           console.log(data)
-//           keywords_text=''
-//           $.each(data, function (index,value){
-//             keywords_text=keywords_text+value['word']+"，"
-//           })
-//           $("#keywords").val(keywords_text)
-//           $(".keywords").html(keywords_text)
-//           // plist(data.items)
-//           // alert("缺少关键词信息,已经自动获取,请再次提交!")
-//           $('#myModal').modal('show') // initializes and invokes show immediately
-
-//         });
-        
-//       }else{
-
-//         $.post("/json/add/data", {
-//         // 'text': text + "", 'plen': plen, 'n': n
-//         "keywords": keywords,'title':title,'content': content
-
-//       })
-//         .done(function (data) {
-//           console.log(data)
-//           // plist(data.items)
-//           $("#title").val('')
-//           $("#keywords").val('')
-//           $("#content").val('')
-//           $('#myModal').modal('hide') // initializes and invokes show immediately
-
-//           $("#data_info").html('已有:'+data['length'])
-//           // var data_list_html='<li>'
-//           // $.each(data['data_last'],function(index,value){
-//           //   data_list_html=data_list_html
-
-//           // })
-//         });
-
-
-//       }
-
-// })
-
-
-
-
-// // 获取关键词
-// $(document).on('click', '#search', function () {
- 
-//       // var keywords =$("#keywords").val()
-//       var keyword = $("#keyword").val()
- 
-
-//        $.get("/json/search", {
-//         // 'text': text + "", 'plen': plen, 'n': n
-//           'keyword': keyword
-//       })
-//         .done(function (data) {
-//           console.log(data)
-//           keywords_text=''
-//           $.each(data.items, function (index,value){
-//             console.log(value)
-//             html='<div class="list-group-item list-group-item-action"><div class="d-flex w-100 justify-content-between">'
-//             html=html+'<h5 class="mb-1">'+value['title']+'</h5>'+'</div>'
-//             html=html+'<div class="mb-1">'+value['content']+'</div>'
-//               html=html+'</div>'
-//             $("#search_list").append(html)
-
-//             // pre_title(value)
- 
-//           })
-
-//           $.each(data.titles, function (index,value){
-//             console.log(value)
-//             html='<li>'
-//             html=html+value
-
-//               html=html+'</li>'
-//             $("#search_list_titles").append(html)
-
-//             // pre_title(value)
- 
-//           })
-
-
-//           // keywords_text=keywords_text+"。"
-//           // $("#keywords").val(keywords_text)
-//           // plist(data.items)
-//         });
-
-// })
 
 
 
@@ -328,27 +239,7 @@ function pre_title(data){
 
 } 
 
-
-
-    // $(function () {
-
-    //   function 
-    //   $.post("/json/predict", {
-    //     // 'text': text + "", 'plen': plen, 'n': n
-    //     "keywords": keywords
-
-    //   })
-    //     .done(function (data) {
-
-    //       console.log(data.items)
-    //       plist(data.items)
-
-
-    //     });
-    // }
-
-    //         })
-
+ 
   </script>
 <div class="container-fluid">
 
@@ -376,31 +267,19 @@ function pre_title(data){
             </div>
              
             <div class="col-auto my-1">
-              <button id='search' type="submit" class="btn btn-primary">Ai生成</button>
-              <button id='search_stop' type="submit" class="btn btn-danger stop">停止预测</button>
-              <button id='addword' type="submit" class="btn btn-danger addword">后台搜索素材</button>
+         
+
+              <button id='wordexplore' type="submit" class="btn btn-danger addword">探索</button>
               
             </div>
           </div>
-          <div id="get_keywords_one"></div>
+         
 
       </div>
     </div>
 
 
-    <h2>标题</h2>
-<ol id="search_list_titles2" class="list-group">
-</ol>
-<ol id="search_list_titles1" class="list-group">
-</ol>
-<ol id="search_list_titles0" class="list-group">
-</ol>
-
-
-<h2>文章</h2>
-    <ul  id="search_list" class="list-group  list-group-flush">
-
-    </ul>
+    <div id="get_wordexplore"></div>
 
   </div>
   <div class="col col-lg-2">

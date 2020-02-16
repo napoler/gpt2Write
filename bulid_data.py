@@ -19,20 +19,22 @@ from config import  *
 from sumy.parsers.html import HtmlParser
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+# from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+from sumy.summarizers.lex_rank import LexRankSummarizer as Summarizer
+
 from sumy.nlp.stemmers import Stemmer
 from sumy.utils import get_stop_words
 
 import json
-
+import  tkitText
 # from .fun import *
-
+import tkitW2vec
 
 from jieba import analyse
 from harvesttext import HarvestText
 
 import pymongo
-
+import  macropodus
 
 
 def add_data(data,path='data/'):
@@ -316,6 +318,179 @@ def data_pre_train_mongo( data_path='data/data.json',train_path='data/train_db.t
 
         # articles_num=art_i+1
         # return articles,articles_num
+
+def data_pre_train_mongo_kwseq( data_path='data/data.json',train_path='data/train_db_kwseq.txt' ):
+    """
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+    [unused5] 标记关键词
+      [unused6]  标记标题
+    [unused7]  标记前文标题
+       [unused8]  标记正文
+    """
+    LANGUAGE = "chinese"
+    SENTENCES_COUNT = 10
+    article_max_len=500
+
+
+    tt=tkitText.Text()
+    stemmer = Stemmer(LANGUAGE)
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words(LANGUAGE)
+    # ie=tkitNlp.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
+    f1 = open(train_path,'w')
+    articles=[]
+    # 引入TF-IDF关键词抽取接口
+    tfidf = analyse.extract_tags
+    # 引入TextRank关键词抽取接口
+    textrank = analyse.textrank
+    #这里定义mongo数据
+    client = pymongo.MongoClient("localhost", 27017)
+    DB_kg_scrapy = client.kg_scrapy
+    print(DB.name)
+    q={}
+    # print('q',q)
+    # w2v=tkitW2vec.Word2vec()
+    # w2v.load(model_file=Word2vec_model)
+    i=0
+    for item in DB_kg_scrapy.kg_content.find(q):
+        i=i+1
+        if i==100:
+            break
+        # print(item)
+        # for sent in tt.sentence_segmentation_v1(item['content']):
+        #     print("句子:",sent)
+        #     keywords=[]
+        #     # print(w2v.keywords([sent]))
+        #     try:
+        #         for word,rank in w2v.keywords(sent):
+        #             # print(word,"----》",rank )
+        #             keywords.append(word)
+        #     except :
+        #         pass
+        #     print(keywords)
+        # keywords=[]
+        #     # print(w2v.keywords([sent]))
+        # try:
+        #     for word,rank in w2v.keywords(item['content'])[:20]:
+        #         # print(word,"----》",rank )
+        #         keywords.append(word)
+        # except :
+        #     pass
+
+        # print('keywords1',keywords)
+        keywords = textrank(item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v')) 
+        print('keywords2',keywords)
+        content="[KW] "+" ".join(keywords)+" [/KW] [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+        content=content.replace("\n\n\n", "\n\n")
+        content=content.replace("\n", " [SEP] ")
+        content_list=cut_text(content,480)
+        # for it in content_list:
+        #     print("++++"*20)
+        #     print(it)
+        # f1.write("\n".join(content_list)+"")
+        f1.write(content)
+        f1.write("\n")
+from harvesttext import HarvestText
+
+def data_pre_train_mongo_summary( data_path='data/data.json',train_path='data/train_db_Summary.txt' ):
+    """
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+    [unused5] 标记关键词
+        [unused6]  标记标题
+    [unused7]  标记前文标题
+        [unused8]  标记正文
+    """
+    LANGUAGE = "chinese"
+    SENTENCES_COUNT = 5
+    article_max_len=500
+
+
+    tt=tkitText.Text()
+    stemmer = Stemmer(LANGUAGE)
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words(LANGUAGE)
+    # ie=tkitNlp.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
+    f1 = open(train_path,'w')
+    articles=[]
+    # 引入TF-IDF关键词抽取接口
+    tfidf = analyse.extract_tags
+    # 引入TextRank关键词抽取接口
+    textrank = analyse.textrank
+    #这里定义mongo数据
+    client = pymongo.MongoClient("localhost", 27017)
+    DB_kg_scrapy = client.kg_scrapy
+    print(DB.name)
+    q={}
+    # print('q',q)
+    # w2v=tkitW2vec.Word2vec()
+    # w2v.load(model_file=Word2vec_model)
+    i=0
+    for item in DB_kg_scrapy.kg_content.find(q):
+        i=i+1
+        if i%10000==0:
+            print(i)
+            # break
+        # parser = PlaintextParser.from_string(item['content'], Tokenizer(LANGUAGE))
+        # sm=[]
+        # for sentence in summarizer(parser.document, SENTENCES_COUNT):
+        #     sm.append(str(sentence))
+        keywords=[]
+        try:
+            # # 基于TextRank算法进行关键词抽取
+            keywords = textrank(item['title']+'\n'+item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v'))  
+
+            # keywords1 =tt.get_keywords(item['title']+'\n'+item['content'])
+            # print(keywords1)
+            # new_keywords=[]
+            # for keyword in keywords1:
+            #     new_keywords.append(keyword['word'])        
+            keyphrases =tt.get_keyphrases(item['title']+'\n'+item['content'])
+            # print(new_keywords)
+            keywords=keywords+keyphrases
+            keywords=list(set(keywords))
+        except :
+            pass
+
+
+        # ht0 = HarvestText()
+        # # f1.write("###"*20+"\n")
+        # # f1.write(item['content'])
+        # f1.write("***"*20+"\n")
+        # predicted_paras = ht0.cut_paragraphs(item['content'], num_paras=5)
+        # f1.write("\n".join(predicted_paras)+"\n\n")
+
+        # print(keywords)
+        # 文本摘要(summarization, 可定义方法, 提供9种文本摘要方法, 'lda', 'mmr', 'textrank', 'text_teaser')
+
+        sm=[]
+        try:
+            summary= item['content']
+            sents = macropodus.summarization(text=str(summary),num=5, type_summarize="text_teaser",title=str(item['title']))
+        
+
+            for r,s in sents:
+                sm.append(s)
+        except :
+            pass
+
+        content=" [SM] "+"。".join(sm)+" [/SM] [KW] "+" ".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+        # content=" [KW] "+" ".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+        content=content.replace("\n\n\n", "\n\n")
+
+        content=content.replace("\n", " [SEP] ")
+
+        # content_list=cut_text(content,480)
+        # for it in content_list:
+        #     print("++++"*20)
+        #     print(it)
+        # f1.write("\n".join(content_list)+"")
+        f1.write(content)
+        f1.write("\n")
+
 def data_pre_train_file(path='./data/'):
     """
     生成训练样本
@@ -401,7 +576,17 @@ def main():
     elif args.do == 'data_pre_train_file':
         data_pre_train_file('./data/')
     elif  args.do=='data_pre_train_mongo':
+        #生成训练资料
+        # python bulid_data.py --do data_pre_train_mongo
         data_pre_train_mongo()
+    elif  args.do=='data_pre_train_mongo_kwseq':
+        #生成训练资料
+        # python bulid_data.py --do data_pre_train_mongo_kwseq
+        data_pre_train_mongo_kwseq()
+    elif  args.do=='data_pre_train_mongo_summary':
+        #生成训练资料
+        # python bulid_data.py --do data_pre_train_mongo_summary
+        data_pre_train_mongo_summary()
 
 if __name__ == '__main__':
     main()

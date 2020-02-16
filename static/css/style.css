@@ -100,3 +100,10 @@ li.list-group-item.rank_2 {
 li.list-group-item.rank_1 {
     background: #dce4c8;
 }
+
+button.badge.badge-dark.tags {
+    padding: 5px;
+    background: #889cec;
+    border: none;
+    margin: 2px 0;
+}
