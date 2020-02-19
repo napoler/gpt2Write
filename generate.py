@@ -211,21 +211,22 @@ from tokenizations import tokenization_bert
 
 class Ai:
     def __init__(self):
+        pass
+    def load_model(self):
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        
-        self.tokenizer = tokenization_bert.BertTokenizer(vocab_file='model/mini/vocab.txt')
-        self.model = GPT2LMHeadModel.from_pretrained('model/mini/')
-        self.model.to(device)
-        self.model.eval()
-    # @profile
+        tokenizer = tokenization_bert.BertTokenizer(vocab_file='model/mini/vocab.txt')
+        model = GPT2LMHeadModel.from_pretrained('model/mini/')
+        model.to(device)
+        model.eval()
+        return model, tokenizer
     def __del__(self):
         print("Ai结束")
-
-                # if torch.cuda.is_available():
-            #     torch.cuda.empty_cache()
-            #     # model.cpu()
-            # else:
-            #     model.cpu()
+        self.release()
+    # @profile
+    def release(self):
+        print("Ai结束")
+        self.model.cpu()
+        torch.cuda.empty_cache()
         try:
             del self.model
             del self.tokenizer
@@ -237,6 +238,7 @@ class Ai:
         #     # del locals()[x]
         # gc.collect()
         gc.collect()
+
     def sample_sequence(self,model, context,end, length, temperature=1, top_k=0, top_p=0.0, device='cpu'):
         context = torch.tensor(context, dtype=torch.long, device=device)
         context = context.unsqueeze(0)
@@ -319,6 +321,8 @@ class Ai:
                 # print(prev)
         # return generate
         model=None
+        inputs=inputs.cpu()
+        prev=prev.cpu()
         del inputs
         del prev
         del output
@@ -356,12 +360,12 @@ class Ai:
 
 
     # @profile
-    def ai(self,text='',args={},key='12312'):
+    def ai(self,text='',args={},key='12312',load_model=None):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print("device",device)
         # device =  "cpu"
-        tokenizer=self.tokenizer
-        model=self.model
+        model,tokenizer=load_model
+
         if args.get('length')!=None:
             length=args['length']
         else:
@@ -397,7 +401,7 @@ class Ai:
         parser.add_argument('--remove_prefix', default=True, required=False, help='移除头部')
         parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
         parser.add_argument('--segment', action='store_true', help='中文以词为单位')
-        parser.add_argument('--fast_pattern',default=False, action='store_true', help='采用更加快的方式生成文本')
+        parser.add_argument('--fast_pattern',default=True, action='store_true', help='采用更加快的方式生成文本')
         parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
         parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
         parser.add_argument('--tid', default=key, type=str, required=False, help='保存生成内容')
@@ -607,9 +611,7 @@ class Ai:
 
             print("=" * 80)
     
-            model=None
-            del model
-            del tokenizer
+
             # del out
             
             # for x in locals().keys():
@@ -644,7 +646,9 @@ class Writing:
         se.acquire()
         # time.sleep(1)
         # print('thread '+str(arg)+" running....")
-        Ai().ai(text=arg,args=self.args,key=self.key)
+        ai=Ai()
+        model=ai.load_model()
+        ai.ai(text=arg,args=self.args,key=self.key,model=model)
         # print("text",text)
         # self.text_list=self.text_list+text
         # q.put((text, func_name)) 
@@ -899,186 +903,186 @@ def get_writing(text,args={"length":20}):
 #         print("获取的所有标题",all_text)
 #         return all_text
 
-def ai_kg(text='',length=20,nsamples=5):
-    """
-    这里生成kg
-    """
-    print("运行知识提取任务")
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
-    parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
-    parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
-    parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
-    parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
-    parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
-    parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
-    parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
-                        help='模型参数')
-    parser.add_argument('--tokenizer_path', default='cache/vocab_small.txt', type=str, required=False, help='词表路径')
-    parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
-    parser.add_argument('--prefix', default=text, type=str, required=False, help='生成文章的开头')
-    parser.add_argument('--remove_prefix', default=True, required=False, help='生成文章的开头')
-    parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
-    parser.add_argument('--segment', action='store_true', help='中文以词为单位')
-    parser.add_argument('--fast_pattern',default=True, action='store_true', help='采用更加快的方式生成文本')
-    parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
-    parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
-    parser.add_argument('--tid', default='0', type=str, required=False, help='保存生成内容')
+# def ai_kg(text='',length=20,nsamples=5):
+#     """
+#     这里生成kg
+#     """
+#     print("运行知识提取任务")
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--device', default='0,1,2,3', type=str, required=False, help='生成设备')
+#     parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
+#     parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
+#     parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
+#     parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
+#     parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
+#     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
+#     parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
+#                         help='模型参数')
+#     parser.add_argument('--tokenizer_path', default='cache/vocab_small.txt', type=str, required=False, help='词表路径')
+#     parser.add_argument('--model_path', default='model/final_model', type=str, required=False, help='模型路径')
+#     parser.add_argument('--prefix', default=text, type=str, required=False, help='生成文章的开头')
+#     parser.add_argument('--remove_prefix', default=True, required=False, help='生成文章的开头')
+#     parser.add_argument('--no_wordpiece', action='store_true', help='不做word piece切词')
+#     parser.add_argument('--segment', action='store_true', help='中文以词为单位')
+#     parser.add_argument('--fast_pattern',default=True, action='store_true', help='采用更加快的方式生成文本')
+#     parser.add_argument('--save_samples', action='store_true', help='保存产生的样本')
+#     parser.add_argument('--save_samples_path', default='.', type=str, required=False, help="保存样本的路径")
+#     parser.add_argument('--tid', default='0', type=str, required=False, help='保存生成内容')
 
-    args = parser.parse_args()
-    print('args:\n' + args.__repr__())
+#     args = parser.parse_args()
+#     print('args:\n' + args.__repr__())
 
-    if args.no_wordpiece:
-        from tokenizations import tokenization_bert_without_wordpiece as tokenization_bert
-    elif args.segment:
-        from tokenizations import tokenization_bert_word_level as tokenization_bert
-    else:
-        from tokenizations import tokenization_bert
+#     if args.no_wordpiece:
+#         from tokenizations import tokenization_bert_without_wordpiece as tokenization_bert
+#     elif args.segment:
+#         from tokenizations import tokenization_bert_word_level as tokenization_bert
+#     else:
+#         from tokenizations import tokenization_bert
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.device  # 此处设置程序使用哪些显卡
-    length = args.length
-    batch_size = args.batch_size
-    nsamples = args.nsamples
-    temperature = args.temperature
-    topk = args.topk
-    topp = args.topp
+#     os.environ["CUDA_VISIBLE_DEVICES"] = args.device  # 此处设置程序使用哪些显卡
+#     length = args.length
+#     batch_size = args.batch_size
+#     nsamples = args.nsamples
+#     temperature = args.temperature
+#     topk = args.topk
+#     topp = args.topp
 
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = "cpu"
+#     # device = "cuda" if torch.cuda.is_available() else "cpu"
+#     device = "cpu"
 
-    tokenizer = tokenization_bert.BertTokenizer(vocab_file=args.tokenizer_path)
-    model = GPT2LMHeadModel.from_pretrained(args.model_path)
-    model.to(device)
-    model.eval()
+#     tokenizer = tokenization_bert.BertTokenizer(vocab_file=args.tokenizer_path)
+#     model = GPT2LMHeadModel.from_pretrained(args.model_path)
+#     model.to(device)
+#     model.eval()
 
-    if length == -1:
-        length = model.config.n_ctx - len(args.prefix)
-    elif length > model.config.n_ctx - len(args.prefix):
-        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
-        # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
-        print("输入内容过长自动裁切,方便生成足够数据")
-        args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
-    if args.save_samples:
-        if not os.path.exists(args.save_samples_path):
-            os.makedirs(args.save_samples_path)
-        samples_file = open(args.save_samples_path + '/samples.txt', 'w', encoding='utf8')
-    while True:
-        # raw_text = args.prefix
-        raw_text =tkit.Text().clear(args.prefix+'')
-        context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
-        generated = 0
-        all_text=[]
-        end=[]
-        for _ in range(nsamples // batch_size):
-            out = generate(
-                model=model,
-                context=context_tokens,
-                end=end,
-                length=length,
-                is_fast_pattern=args.fast_pattern,
-                temperature=temperature, top_k=topk, top_p=topp, device=device
-            )
-            for i in range(batch_size):
-                generated += 1
-                text = tokenizer.convert_ids_to_tokens(out)
-                for i, item in enumerate(text[:-1]):  # 确保英文前后有空格
-                    if is_word(item) and is_word(text[i + 1]):
-                        text[i] = item + ' '
-                kgs=[]
-                for i, item in enumerate(text):
-                    # print(text[i])
-                    if item == '[MASK]':
-                        text[i] = ''
-                    if item == '[CLS]' or item == '[SEP]':
-                        # print('缓存')
-                        text[i] = '\n'
+#     if length == -1:
+#         length = model.config.n_ctx - len(args.prefix)
+#     elif length > model.config.n_ctx - len(args.prefix):
+#         # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+#         # raise ValueError("Can't get samples longer than window size: %s" % model.config.n_ctx)
+#         print("输入内容过长自动裁切,方便生成足够数据")
+#         args.prefix=args.prefix[-(model.config.n_ctx-args.length):]
+#     if args.save_samples:
+#         if not os.path.exists(args.save_samples_path):
+#             os.makedirs(args.save_samples_path)
+#         samples_file = open(args.save_samples_path + '/samples.txt', 'w', encoding='utf8')
+#     while True:
+#         # raw_text = args.prefix
+#         raw_text =tkit.Text().clear(args.prefix+'')
+#         context_tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(raw_text))
+#         generated = 0
+#         all_text=[]
+#         end=[]
+#         for _ in range(nsamples // batch_size):
+#             out = generate(
+#                 model=model,
+#                 context=context_tokens,
+#                 end=end,
+#                 length=length,
+#                 is_fast_pattern=args.fast_pattern,
+#                 temperature=temperature, top_k=topk, top_p=topp, device=device
+#             )
+#             for i in range(batch_size):
+#                 generated += 1
+#                 text = tokenizer.convert_ids_to_tokens(out)
+#                 for i, item in enumerate(text[:-1]):  # 确保英文前后有空格
+#                     if is_word(item) and is_word(text[i + 1]):
+#                         text[i] = item + ' '
+#                 kgs=[]
+#                 for i, item in enumerate(text):
+#                     # print(text[i])
+#                     if item == '[MASK]':
+#                         text[i] = ''
+#                     if item == '[CLS]' or item == '[SEP]':
+#                         # print('缓存')
+#                         text[i] = '\n'
 
-                    # [unused5] 标记关键词
-                    # [unused6]  标记标题
-                    # [unused7]  标记前文标题  
-                    # [unused8]  标记正文
-                    # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
-                    #     text[i] = '\n'
-                    if item == '[TT]':
-                        text[i] = ' [keywords] \n'
-                        print("关键词")
-                    if item == '[TT]':
-                        text[i] = ' [title] \n'
-                    if item == '[PT]':
-                        text[i] = ' [pretitle] \n'        
-                    if item == '[unused8]':
-                        text[i] = ' [content] \n'      
-                    # if item == '[kgs]':
-                    #     text[i] = ' [content] \n'     
-                    # if item == '[kgs]':
-                    #     text[i] = ' |||'   
-                    # if item == '[kg]':
-                    #     text[i] = ' |||'  
-                    # if item == '[/kg]':
-                    #     text[i] = ' |||'       
-                    # if item == '[kge]':
-                    #     text[i] = ' |||'    
-                    #     break                                            
-                    # if item == '[title]':
-                    #     text[i] = '\n标题: '
-                info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
-                print(info)
-                text = ''.join(text).replace('##', '').strip()
+#                     # [unused5] 标记关键词
+#                     # [unused6]  标记标题
+#                     # [unused7]  标记前文标题  
+#                     # [unused8]  标记正文
+#                     # if item == '[unused5]' or item == '[unused6]' or item == '[unused7]' or item == '[unused8]' or item == '[unused9]' ':
+#                     #     text[i] = '\n'
+#                     if item == '[TT]':
+#                         text[i] = ' [keywords] \n'
+#                         print("关键词")
+#                     if item == '[TT]':
+#                         text[i] = ' [title] \n'
+#                     if item == '[PT]':
+#                         text[i] = ' [pretitle] \n'        
+#                     if item == '[unused8]':
+#                         text[i] = ' [content] \n'      
+#                     # if item == '[kgs]':
+#                     #     text[i] = ' [content] \n'     
+#                     # if item == '[kgs]':
+#                     #     text[i] = ' |||'   
+#                     # if item == '[kg]':
+#                     #     text[i] = ' |||'  
+#                     # if item == '[/kg]':
+#                     #     text[i] = ' |||'       
+#                     # if item == '[kge]':
+#                     #     text[i] = ' |||'    
+#                     #     break                                            
+#                     # if item == '[title]':
+#                     #     text[i] = '\n标题: '
+#                 info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
+#                 print(info)
+#                 text = ''.join(text).replace('##', '').strip()
 
-                # text = ''.join(text).replace('##', '').strip()
-                kg_start='[kgs]'
-                kg_end='[kge]'
-                kg_start_n=text.index(kg_start)
-                kg_end_n=text.index(kg_end)
-                text=text[(kg_start_n+5):kg_end_n]
+#                 # text = ''.join(text).replace('##', '').strip()
+#                 kg_start='[kgs]'
+#                 kg_end='[kge]'
+#                 kg_start_n=text.index(kg_start)
+#                 kg_end_n=text.index(kg_end)
+#                 text=text[(kg_start_n+5):kg_end_n]
 
-                text = text.replace('[/kg]', '||').replace('[kg]', '').replace('[kge]', '').strip()
+#                 text = text.replace('[/kg]', '||').replace('[kg]', '').replace('[kge]', '').strip()
 
                 
-                print(text)
-                if args.remove_prefix:
+#                 print(text)
+#                 if args.remove_prefix:
  
-                    # remove_prefix_length =len(context_tokens)
-                    # print(remove_prefix_length)
-                    # text=text[remove_prefix_length:]
+#                     # remove_prefix_length =len(context_tokens)
+#                     # print(remove_prefix_length)
+#                     # text=text[remove_prefix_length:]
  
-                    # prefix_clean =tkit.Text().clear(args.prefix)
-                    print('raw_text',raw_text)
-                    text=text.replace(raw_text,'')
+#                     # prefix_clean =tkit.Text().clear(args.prefix)
+#                     print('raw_text',raw_text)
+#                     text=text.replace(raw_text,'')
 
-                if text in all_text:
-                    pass
-                else: 
-                   all_text.append(text)
-                if args.save_samples:
-                    samples_file.write(info)
-                    samples_file.write(text)
-                    samples_file.write('\n')
-                    samples_file.write('=' * 90)
-                    samples_file.write('\n' * 2)
-        print("=" * 80)
-        del model
-        gc.collect()
-        for x in locals().keys():
-            # print("清理函数内存",locals()[x])
-            del locals()[x]
-        gc.collect()
-        #保存生成的数据
-        tkit.File().mkdir('tmp')
-        data_path="tmp/run_task"+args.tid+".json"
-        print('保存生成',data_path)
-        tjson=tkit.Json(file_path=data_path)
-        tjson.save([{'prefix':args.prefix,'data':all_text}])
+#                 if text in all_text:
+#                     pass
+#                 else: 
+#                    all_text.append(text)
+#                 if args.save_samples:
+#                     samples_file.write(info)
+#                     samples_file.write(text)
+#                     samples_file.write('\n')
+#                     samples_file.write('=' * 90)
+#                     samples_file.write('\n' * 2)
+#         print("=" * 80)
+#         del model
+#         gc.collect()
+#         for x in locals().keys():
+#             # print("清理函数内存",locals()[x])
+#             del locals()[x]
+#         gc.collect()
+#         #保存生成的数据
+#         tkit.File().mkdir('tmp')
+#         data_path="tmp/run_task"+args.tid+".json"
+#         print('保存生成',data_path)
+#         tjson=tkit.Json(file_path=data_path)
+#         tjson.save([{'prefix':args.prefix,'data':all_text}])
 
-        return all_text
+#         return all_text
 
-        if generated == nsamples:
-            # close file when finish writing.
-            if args.save_samples:
-                samples_file.close()
-            break
-    # del model,all_text
-    # gc.collect()
+#         if generated == nsamples:
+#             # close file when finish writing.
+#             if args.save_samples:
+#                 samples_file.close()
+#             break
+#     # del model,all_text
+#     # gc.collect()
 
 
 
@@ -1107,8 +1111,17 @@ if __name__ == '__main__':
     # text=['柯基犬真是']
     # for i in range(1000):
         # text=Ai().ai(text=text[0],length=20,nsamples=1)
-    Ai().ai()
+    # Ai().ai()
     # # ai_kg()
+    ai = Ai()
+    load_model = ai.load_model()
+
+    ai.ai(load_model=load_model)
+    model,_=load_model
+    model.cpu()
+    torch.cuda.empty_cache()
+    del model
+    time.sleep(1000)
     
     # W=Writing()
     # W.writing("柯基犬")

@@ -128,18 +128,21 @@ def get_ner():
     Ner.args['max_length'] = 200
     Ner.setconfig()
     return Ner
-#获取描述
-MDes=get_des()
-#获取关系词
-MRel=get_ner_rel()
-# 获取实体
-MNer=get_ner()
+# #获取描述
+# MDes=get_des()
+# #获取关系词
+# MRel=get_ner_rel()
+# # 获取实体
+# MNer=get_ner()
 
 nlp=Nlp()
 def get_kg(text):
     """
     预测知识
     """
+    MNer = get_ner()
+    MRel = get_ner_rel()
+    MDes = get_des()
     kgs=[]
     result=MNer.pre([text])
     ner=nlp.ner(text)

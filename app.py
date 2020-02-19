@@ -79,6 +79,9 @@ def get_predict(text,plen,n,start,end,key=None):
     # print(subprocess.call(cmd, shell=True))
     if subprocess.call(cmd, shell=True)==0:
         return get_temp(tid)['value']
+    else:
+        return {}
+
 
         
 
@@ -668,8 +671,6 @@ def json_search(message):
     """
     print('message',message)
     keyword = message.get('data')
-    rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3)
-
 
     print("关键词",keyword)
     # log("添加关键词")
@@ -680,10 +681,13 @@ def json_search(message):
     items=DB.pre_titles.find({'key':keyword})
     titles=[]
     title_keys=[]
+    rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3)
     for item in items:
-        # print(item)
+
         p = rankclass.pre(item['title'])
         softmax=rankclass.softmax()
+
+        del rankclass
         item['softmax']=softmax
         item['rank']=p
         # titles.append({"key":item['_id'],"title":item['title'],'rank':p,'softmax':softmax})
@@ -692,7 +696,7 @@ def json_search(message):
             title_keys.append(item['title'])
     # data={"items":titles,"limit":20}
     emit('预测反馈', {'state': 'success','step':'get_titles','data':titles})
-    
+    rankclass.release()
 
     # response = requests.get(
     #     'http://0.0.0.0:6801/json/keyword',
@@ -817,31 +821,42 @@ def json_search(message):
                 start='[PT]'
                 end='[/PT]'
                 pre_title=get_predict(text,100,nsamples,start,end)
+                # print("pre_title",pre_title)
                 # print(type(pre_title['text']))
                 # if pre_title['text']==None:
                 #     continue
-                try:
-                    for it in pre_title.get('text'):
-                        if it.get("pt")==None:
-                            continue
-                        
-                        if it['pt'] not in title_keys and it['pt'] != item['title'] and len(it['pt'])>3:
-                            titles=[]
-                            title_keys.append(it)
-                            p = rankclass.pre(it['pt'])
-                            softmax=rankclass.softmax()
-                            one_data={"_id":tt.md5(it['pt']),"title":it['pt'],'key':keyword,'parent':key,'time':time.time(),'rank':p,'softmax':softmax,"state":'uncheck'}
-                            try:
-                                DB.pre_titles.insert_one(one_data)
-                                pass
-                            except:
-                                pass
-                            # titles.append({"_id":tt.md5(it['pt']),'key':key,"title":it['pt'],'rank':p,'softmax':softmax})
-                            titles.append(one_data)
-                            print('titles',titles)
-                            emit('预测反馈', {'state': 'success','step':'get_titles','data':titles})
-                except :
+                # print("pre_title",pre_title)
+                if "text" in pre_title.keys():
                     pass
+                else:
+                    continue
+                for it in pre_title.get('text'):
+                    if it.get("pt")==None:
+                        continue
+                    elif it['pt'] not in title_keys and it['pt'] != item['title'] and len(it['pt'])>3:
+                        # print("it['pt']",it['pt'])
+                        titles=[]
+                        title_keys.append(it)
+                        rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3,device='cpu')
+                        p = rankclass.pre(it['pt'])
+                        softmax=rankclass.softmax()
+                        one_data={"_id":tt.md5(it['pt']),"title":it['pt'],'key':keyword,'parent':key,'time':time.time(),'rank':p,'softmax':softmax,"state":'uncheck'}
+                        rankclass.release()
+                        del rankclass
+                        print("one_data",one_data)
+                        try:
+                            DB.pre_titles.insert_one(one_data)
+                            pass
+                        except:
+                            pass
+                        
+                        # titles.append({"_id":tt.md5(it['pt']),'key':key,"title":it['pt'],'rank':p,'softmax':softmax})
+                        titles.append(one_data)
+                        print('titles',titles)
+                        emit('预测反馈', {'state': 'success','step':'get_titles','data':titles})
+                
+                            
+
         i=i+1
         emit('预测反馈', {'state': 'success','step':'log','data':"任务运行结束 "}) 
         # del kws

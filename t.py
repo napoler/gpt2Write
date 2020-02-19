@@ -1,35 +1,43 @@
-import  gc
-import  sys
-from copy import  copy
-# gc.set_debug(gc.DEBUG_STATS|gc.DEBUG_LEAK)
-class A:
-    def __del__(self):
-        pass
-class B:
-    def __del__(self):
-        pass
- 
-a=A()
-b=B()
-# print hex(id(a))
-# print hex(id(a.__dict__))
-print(id(a))
-print(id(b))
-a.b=b
-c=copy(a)
-d=a
-print(sys.getrefcount(d))
-print(sys.getrefcount(c))
-print(sys.getrefcount(a))
-b.a=a
-del a
-del b
-n=0
-for i in range(100000):
-    i=i+1
-print(sys.getrefcount(i))
-print (gc.collect(),gc.garbage)
-# print (gc.garbage)
-# ————————————————
-# 版权声明：本文为CSDN博主「yueguanghaidao」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
-# 原文链接：https://blog.csdn.net/yueguanghaidao/article/details/11274737
+from albert_pytorch import *
+import sys
+import time
+import torch
+# for i in range(10):
+#     with torch.no_grad():
+#         rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3, device='cuda')
+#         p = rankclass.pre("柯基犬喜欢吃")
+#     rankclass.release()
+#     # del rankclass
+#
+#     # print(torch.cuda.memory_cached())
+# time.sleep(1)
+model_name_or_path='tkitfiles/rank'
+P = Plus()
+P.args['class_name'] = "AlbertForSequenceClassification"
+P.args['model_name_or_path'] = model_name_or_path
+P.args['finetuning_task'] = 'finetuning_task'
+P.args['num_labels'] = 3
+print(torch.cuda.max_memory_cached())
+model,tokenizer,config_class=P.load_model()
+print(torch.cuda.memory_cached())
+P.release()
+torch.cuda.empty_cache()
+print(torch.cuda.memory_cached())
+time.sleep(100)
+
+# device = torch.device('cuda:0')
+# # with torch.no_grad():
+# # 定义两个tensor
+# dummy_tensor_4 = torch.randn(120, 3, 512, 512).float().to(device)  # 120*3*512*512*4/1000/1000 = 377.48M
+# dummy_tensor_2 = torch.randn(80, 3, 512, 512).float().to(device)  # 80*3*512*512*4/1000/1000 = 251.64M
+# print(torch.cuda.memory_cached())
+# time.sleep(1)
+# # 然后释放
+# dummy_tensor_4 = dummy_tensor_4.cpu()
+# dummy_tensor_2 = dummy_tensor_2.cpu()
+# # 这里虽然将上面的显存释放了，但是我们通过Nvidia-smi命令看到显存依然在占用
+# print(torch.cuda.memory_cached())
+# torch.cuda.empty_cache()
+# # 只有执行完上面这句，显存才会在Nvidia-smi中释放
+# print(torch.cuda.memory_cached())
+time.sleep(100)
