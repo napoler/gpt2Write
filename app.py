@@ -89,6 +89,39 @@ def index():
 @app.route('/edit')
 def edit():
     return render_template("edit.html")
+
+@app.route('/titles',methods=['GET', 'POST'])
+def titles():
+    page = request.args.get('page')
+    state = request.args.get('state')
+    q={}
+    skip=0
+    limit=20
+    if page==None or page=='':
+        page=0
+        skip=0
+    else:
+        skip=limit*int(page)
+        page=int(page)
+        pass
+    if state==None or state=='':
+        # items=DB.pre_titles.find({})
+        pass
+    else:
+        # items=DB.pre_titles.find({"state":state})
+        q['state']=state
+        pass
+    items=DB.pre_titles.find(q).limit(limit).skip(skip).sort('time',-1)
+    # print(items)
+    data={
+        'page':page,
+        'nextpage':page+1,
+        'prepage':page-1,
+        'state':state,
+        'items':items
+
+    }
+    return render_template("titles.html",data=data)    
 # 获取预测结果
 @app.route("/json/predict",methods=['GET', 'POST'])
 # 自定义限制器覆盖了默认限制器
@@ -558,9 +591,21 @@ def wordexplore(message):
 
 
 
+@socketio.on('添加标题', namespace='/tapi')
+def addtitle(message):
+    """
+    构建训练数据
+    """
+    data = message.get('data')
+    # tt=tkitText.Text()
+    
+    try:
 
-
-
+        DB.pre_titles.update_one({'_id':data["_id"]},   {"$set" :{'state':'good'}}) 
+    except :
+        pass
+    emit('预测反馈', {'state': 'success','step':'addtitle','data':data})
+    
 
 
 
@@ -639,7 +684,10 @@ def json_search(message):
         # print(item)
         p = rankclass.pre(item['title'])
         softmax=rankclass.softmax()
-        titles.append({"key":item['_id'],"title":item['title'],'rank':p,'softmax':softmax})
+        item['softmax']=softmax
+        item['rank']=p
+        # titles.append({"key":item['_id'],"title":item['title'],'rank':p,'softmax':softmax})
+        titles.append(item)
         if item['title'] not in title_keys:
             title_keys.append(item['title'])
     # data={"items":titles,"limit":20}
@@ -699,10 +747,12 @@ def json_search(message):
                     #请求搜索结果
             if len(jobid_finished)==0:
                 emit('预测反馈', {'state': 'success','step':'log','data':"爬虫工作中"}) 
+            else:
+                emit('预测反馈', {'state': 'success','step':'log','data':"爬虫结束工作"}) 
             # 请求进程结果
             response = requests.get(
                 'http://0.0.0.0:6801/json/keyword',
-                params={'keyword': keyword},
+                params={'keyword': keyword,'limit':50},
             )
             if response.status_code ==200:
                 items=response.json()
@@ -750,7 +800,9 @@ def json_search(message):
             # del kws
             # del w2v
             gc.collect()
-            key=tt.md5(text)
+            # print(item)
+            # key=tt.md5(text)
+            key=item['path']
             if key not in keys:
                 item['key']=key
                 emit('预测反馈', {'state': 'success','step':'get_articles','data':[item]})
@@ -778,12 +830,20 @@ def json_search(message):
                             title_keys.append(it)
                             p = rankclass.pre(it['pt'])
                             softmax=rankclass.softmax()
-                            titles.append({'key':key,"title":it['pt'],'rank':p,'softmax':softmax})
+                            one_data={"_id":tt.md5(it['pt']),"title":it['pt'],'key':keyword,'parent':key,'time':time.time(),'rank':p,'softmax':softmax,"state":'uncheck'}
+                            try:
+                                DB.pre_titles.insert_one(one_data)
+                                pass
+                            except:
+                                pass
+                            # titles.append({"_id":tt.md5(it['pt']),'key':key,"title":it['pt'],'rank':p,'softmax':softmax})
+                            titles.append(one_data)
                             print('titles',titles)
                             emit('预测反馈', {'state': 'success','step':'get_titles','data':titles})
                 except :
                     pass
         i=i+1
+        emit('预测反馈', {'state': 'success','step':'log','data':"任务运行结束 "}) 
         # del kws
         # del w2v
                     

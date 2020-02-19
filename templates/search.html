@@ -17,12 +17,12 @@
   <link rel="stylesheet" href="/static/css/editormd.css" />
   <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
   <style>
-.btn {
-    background-color: rebeccapurple;
-    color: #fff;
+ 
+ 
+button.btn.btn-danger.addtitles.good {
+  background: #435bd2;
+    border: none;
 }
-
-
   </style>
 </head>
 
@@ -31,22 +31,22 @@
   <script src="/static/js/jquery.min.js"></script>
   <!-- <script src="/static/editor.md/editormd.min.js"></script> -->
   <script type="text/javascript">
-
+var socket = io.connect('http://' + document.domain + ':' + location.port + '/tapi');
 $(document).ready(function(){
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/tapi');
-    socket.on('my response', function(msg) {
-        $('#log').append('<p>Received: ' + msg.data + '</p>');
-        // $('#log').html('<p>Received: ' + msg.data + '</p>');
-        console.log(msg.data.items)
-        console.log(msg)
-        var html=[]
-        $.each(msg.data.items, function (index,value){
-            // keywords_text=keywords_text+value['word']+"，"
-            // $('#log').append('<p>Received: ' + value['title'] + '</p>');
-            html=html+'<p> ' + value['title'] + '</p>'
-          })
-          $('#log').html(html)
-    });
+    
+    // socket.on('my response', function(msg) {
+    //     $('#log').append('<p>Received: ' + msg.data + '</p>');
+    //     // $('#log').html('<p>Received: ' + msg.data + '</p>');
+    //     console.log(msg.data.items)
+    //     console.log(msg)
+    //     var html=[]
+    //     $.each(msg.data.items, function (index,value){
+    //         // keywords_text=keywords_text+value['word']+"，"
+    //         // $('#log').append('<p>Received: ' + value['title'] + '</p>');
+    //         html=html+'<p> ' + value['title'] + '</p>'
+    //       })
+    //       $('#log').html(html)
+    // });
     socket.on('预测反馈', function(msg) {
         // $('#log').append('<p>Received: ' + msg.data + '</p>');
         // $('#log').html('<p>Received: ' + msg.data + '</p>');
@@ -108,14 +108,15 @@ $(document).ready(function(){
             console.log("value['highlights']",value['highlights'])
             console.log("value['content']",value['content'])
             if(  value.hasOwnProperty('highlights') ){
-              html=html+'<div> ' + value['highlights'] + '</div>'
+              html=html+'<div id="a_'+value['path']+'"> ' + value['highlights'] + '</div>'
 
             }else{
-              html=html+'<div> ' + value['content'] + '</div>'
+              html=html+'<div id="a_'+value['_id']+'" > ' + value['content'] + '</div>'
             }
-              
+            $('#get_keywords').prepend('<p> ' + value['title'] + '</p>')
           })
           $('#search_list').prepend(html)
+
     }
     
     function get_keywords(data){
@@ -136,7 +137,7 @@ $(document).ready(function(){
         $.each(data, function (index,value){
             // keywords_text=keywords_text+value['word']+"，"
             // $('#log').append('<p>Received: ' + value['title'] + '</p>');
-            html='<li class="list-group-item rank_'+value['rank']+'">('+value['rank']+' 概率：'+value['softmax'][value['rank']]+') ' +  value['title']  + '</li>'
+            html='<li class="list-group-item rank_'+value['rank']+'">('+value['rank']+' 概率：'+value['softmax'][2]+') ' +  value['title']  + '<button value="'+ value['_id'] +'" type="submit" class="btn btn-danger addtitles '+ value['state'] +'">收藏标题</button><button value="a_'+ value['parent'] +'" type="submit" class="btn btn-danger go">查看文章</button></li>'
             $('#search_list_titles'+value['rank']).prepend(html)
           })
           
@@ -181,7 +182,13 @@ $(document).ready(function(){
         socket.emit('添加关键词',{data: $('#keyword').val(),'url_type':$('#url_type').val()});
         return false;
     });
+    // $('.addtitles').click(function(event) {
+    //   console.log("点击标题收藏")
+    //     socket.emit('添加标题',{data: {"title":$(this).text()}});
+    //     $(this).removeClass("btn-danger").addClass("btn-success")
 
+    //     return false;
+    // });
 
 
 });
@@ -192,7 +199,12 @@ var keyword=$("#keyword").val()
 $("#keyword").val(keyword+" "+tag)
 
 })
+$(document).on('click', '.addtitles', function () {
+  console.log("点击标题收藏")
+  socket.emit('添加标题',{data: {"_id":$(this).val()}});
+  $(this).removeClass("btn-danger").addClass("btn-success")
 
+})
 // // 提交内容
 // $(document).on('click', '.add_post', function () {
 //       var title = $("#title").val()
