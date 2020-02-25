@@ -18,7 +18,9 @@
   <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
   <style>
  
- 
+ .jumbotron_end{
+    background: #afef95;
+}
 button.btn.btn-danger.addtitles.good {
   background: #435bd2;
     border: none;
@@ -87,11 +89,21 @@ $(document).ready(function(){
 
     // var html='<h4>添加搜索成功</h4>'
       // html=html+'<p>status:'+data['status']+'</p>'
-      html='<p>'+data+'</p>'
+      if (data=="任务运行结束"){
+        console.log("任务结束")
+        $(".jumbotron").addClass("jumbotron_end");
+
+      } 
+        html='<p>'+data+'</p>'
       $('#log').prepend(html)
+      html='<p>'+data+'</p>'
+      $('#log_one').html(html)
+
     }
     function add(data){
-
+ 
+        $(".jumbotron").removeClass("jumbotron_end");
+ 
       var html='<h4>添加搜索成功</h4>'
         html=html+'<p>status:'+data['status']+'</p>'
         html=html+'<p><a href="http://localhost:6800/logs/default/kgbot/'+data['jobid']+'.log" >jobid:'+data['jobid']+'</a></p>'
@@ -395,7 +407,7 @@ function pre_title(data){
             </div>
           </div>
           <div id="get_keywords_one"></div>
-
+          <div id="log_one"></div>
       </div>
     </div>
 

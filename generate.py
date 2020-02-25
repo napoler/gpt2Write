@@ -221,17 +221,17 @@ class Ai:
         return model, tokenizer
     def __del__(self):
         print("Ai结束")
-        self.release()
+        # self.release()
     # @profile
     def release(self):
         print("Ai结束")
-        self.model.cpu()
+        model.cpu()
         torch.cuda.empty_cache()
-        try:
-            del self.model
-            del self.tokenizer
-        except :
-            pass
+        # try:
+        #     del self.model
+        #     del self.tokenizer
+        # except :
+        #     pass
         # del out
         # for x in locals().keys():
         #     print("清理函数内存",locals()[x])
@@ -460,7 +460,7 @@ class Ai:
 
             if args.end!="":
                 end.append(args.end)
-
+            data_list = []
             end = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(" ".join(end)))
             for _ in range(nsamples // batch_size):
                 if args.fast_pattern:
@@ -504,7 +504,8 @@ class Ai:
                         is_fast_pattern=args.fast_pattern,
                         temperature=temperature, top_k=topk, top_p=topp, device=device
                     )                
-                # print('out',out)
+
+
                 for i in range(batch_size):
                     generated += 1
                     text = tokenizer.convert_ids_to_tokens(out)
@@ -522,6 +523,7 @@ class Ai:
                     data={'do':'text','text':''}
                     # print("text",text)
                     text_all=''
+
                     for i, item in enumerate(text):
                         if item == '[MASK]':
                             # text[i] = ''
@@ -592,7 +594,7 @@ class Ai:
                     print(data)
                     text = ''.join(text).replace('##', '').strip()
                     print(text)
-
+                    data_list.append(data)
 
                     if text in all_text:
                         # pass
@@ -618,10 +620,13 @@ class Ai:
             #     # print("清理函数内存",locals()[x])
             #     del locals()[x]
             # gc.collect()
-            new =copy(all_text)
+            # new =copy(all_text)
             del all_text
             gc.collect()
-            return new
+            # return new
+            print(get_temp(args.tid))
+            return data_list
+
 
             # if generated == nsamples:
             #     # close file when finish writing.
@@ -1116,12 +1121,13 @@ if __name__ == '__main__':
     ai = Ai()
     load_model = ai.load_model()
 
-    ai.ai(load_model=load_model)
+    data=ai.ai(load_model=load_model)
     model,_=load_model
     model.cpu()
     torch.cuda.empty_cache()
     del model
-    time.sleep(1000)
+    # print(data)
+    # time.sleep(1000)
     
     # W=Writing()
     # W.writing("柯基犬")

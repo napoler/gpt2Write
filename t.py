@@ -2,28 +2,34 @@ from albert_pytorch import *
 import sys
 import time
 import torch
-# for i in range(10):
-#     with torch.no_grad():
-#         rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3, device='cuda')
-#         p = rankclass.pre("柯基犬喜欢吃")
-#     rankclass.release()
-#     # del rankclass
+
+print(torch.cuda.memory_allocated())
+print(torch.cuda.max_memory_allocated())
+
+
+for i in range(10):
+    with torch.no_grad():
+        rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3, device='cuda')
+        p = rankclass.pre("柯基犬喜欢吃")
+        print(p)
+    rankclass.release()
+    # del rankclass
 #
 #     # print(torch.cuda.memory_cached())
 # time.sleep(1)
-model_name_or_path='tkitfiles/rank'
-P = Plus()
-P.args['class_name'] = "AlbertForSequenceClassification"
-P.args['model_name_or_path'] = model_name_or_path
-P.args['finetuning_task'] = 'finetuning_task'
-P.args['num_labels'] = 3
-print(torch.cuda.max_memory_cached())
-model,tokenizer,config_class=P.load_model()
-print(torch.cuda.memory_cached())
-P.release()
-torch.cuda.empty_cache()
-print(torch.cuda.memory_cached())
-time.sleep(100)
+# model_name_or_path='tkitfiles/rank'
+# P = Plus()
+# P.args['class_name'] = "AlbertForSequenceClassification"
+# P.args['model_name_or_path'] = model_name_or_path
+# P.args['finetuning_task'] = 'finetuning_task'
+# P.args['num_labels'] = 3
+# print(torch.cuda.max_memory_cached())
+# model,tokenizer,config_class=P.load_model()
+# print(torch.cuda.memory_cached())
+# P.release()
+# torch.cuda.empty_cache()
+# print(torch.cuda.memory_cached())
+# time.sleep(100)
 
 # device = torch.device('cuda:0')
 # # with torch.no_grad():

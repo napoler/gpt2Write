@@ -77,6 +77,7 @@ def get_seq(text):
 
 
     return s
+
 from memory_profiler import profile
 import gc
 # @profile

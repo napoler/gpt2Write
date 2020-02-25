@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
   <!-- Bootstrap CSS -->
-  
+
   <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
@@ -17,18 +17,19 @@
   <link rel="stylesheet" href="/static/css/editormd.css" />
   <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
   <style>
-div#plist {
- 
-  background: #fff;
-    border: 1px solid #ccc;
-    padding: 5px;
-    font-size: 1.1em;
-    color: #333;
-    overflow-y: auto;
+    div#plist {
 
-    height: 698px;
-    width: 100%;
-}
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 5px;
+      font-size: 1.1em;
+      color: #333;
+      overflow-y: auto;
+
+      height: 698px;
+      width: 100%;
+    }
+
     div#plist li {
       list-style: decimal-leading-zero;
       padding: 2px 10px;
@@ -49,15 +50,18 @@ div#plist {
       background: rgb(7, 97, 156);
       color: #fff;
     }
+
     ul#plist_ul {
-    /* height: 165px;
+      /* height: 165px;
     overflow-y: scroll; */
-    margin-left: 20px;
-}
-#pre_loading {
-    margin: 10px 149px;
-   
-}
+      margin-left: 20px;
+    }
+
+    #pre_loading {
+      margin: 10px 149px;
+
+    }
+
     .b {
       color: firebrick
     }
@@ -68,50 +72,63 @@ div#plist {
       margin: auto;
     }
 
-    #settings-box .modal-body,    #settings-box .modal-header ,    #settings-box .modal-footer {
+    #settings-box .modal-body,
+    #settings-box .modal-header,
+    #settings-box .modal-footer {
 
-margin: 0 30%;
-background: 
+      margin: 0 30%;
+      background:
 
-#333;
+        #333;
 
-}
-.pre-shot {
+    }
 
-  cursor: auto !important;
-    color: #333 !important;
-    padding:10px;
-    background: #c1bebe;
-    font-size: 0.8em;
-}
-.it.active{
-  background: #989da5 !important;
-  color:#fff !important
-}
-#marker li{
-    border-bottom: 1px #ccc dotted;
-    list-style: none;
-    margin: 2px 15px;
-}
-h3 {
-    font-size: 1.3em;
-    padding: 5px;
-}
-.kg-info dl {
-  border: 1px solid #c5c5c5;
-  padding: 10px;
-}
-.kg-info dd {
-    margin-left: 16px;
-}
-div#marker {
-    height: 700px;
-    overflow-y: auto;
-}
-#marker-tags .badge{
-  margin:2px;
-  padding:8px;
-}
+    .pre-shot {
+
+      cursor: auto !important;
+      color: #333 !important;
+      padding: 10px;
+      background: #c1bebe;
+      font-size: 0.8em;
+    }
+
+    .it.active {
+      background: #989da5 !important;
+      color: #fff !important
+    }
+
+    #marker li {
+      border-bottom: 1px #ccc dotted;
+      list-style: none;
+      margin: 2px 15px;
+    }
+
+    h3 {
+      font-size: 1.3em;
+      padding: 5px;
+    }
+
+    .kg-info dl {
+      border: 1px solid #c5c5c5;
+      padding: 10px;
+    }
+
+    .kg-info dd {
+      margin-left: 16px;
+    }
+
+    div#marker {
+      height: 700px;
+      overflow-y: auto;
+    }
+
+    #marker-tags .badge {
+      margin: 2px;
+      padding: 8px;
+    }
+    .it.c{
+      background-color: #ddd;
+    }
   </style>
 </head>
 
@@ -123,74 +140,89 @@ div#marker {
       <header>
         <h1>Ai edit</h1>
       </header>
-  <div class="row">
+      <div class="row">
 
 
-    <div class="col-md-4 col-xl-3 bd-sidebar">
+        <div class="col-md-4 col-xl-3 bd-sidebar">
 
-      <div class="btn-group">
-        <button id="settings" type="button" class="btn btn-default settings">设置</button>
-        <button id='getkeywords' type="button" class="btn btn-default">转换成关键词 </button>
-        <button id="getkeyseq" type="button" class="btn btn-default"> 转换成关键语句</button>
+          <div class="btn-group">
+            <button id="settings" type="button" class="btn btn-default settings">设置</button>
+            <button id='getkeywords' type="button" class="btn btn-default">转换成关键词 </button>
+            <button id="getkeyseq" type="button" class="btn btn-default"> 转换成关键语句</button>
+          </div>
+          <!-- 预测提示 -->
+          <div id="plist">
+
+          </div>
+          <!-- 预测提示end -->
+
+
+
+        </div>
+
+        <div class="col-md-5 col-xl-6 main-content">
+          <div id="test-editormd">
+            <textarea style="display:none;"></textarea>
+          </div>
+          <p class='tips'>按下Tab键获取人工智能建议</p>
+          <input id="serachkeywords_input" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
+          <button id='serachkeywords' type="submit" class="btn btn-primary">搜索</button>
+      
+          <div id="serach-rs">
+          </div>
+        </div>
+
+
+        <div class="col-md-3 col-xl-3 r-sidebar">
+          <h2>句子</h2>
+          <div id="serach-sent">
+            <ol></ol>
+          </div>
+          <h2>知识拓展</h2>
+          <!-- 知识信息 -->
+          <div id="marker-tags">
+
+          </div>
+          <!-- 知识信息end -->
+          <!-- 知识信息 -->
+          <div id="marker-box">
+            <div class="accordion" id="marker">
+            </div>
+          </div>
+          <!-- 知识信息end -->
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
       </div>
-  <!-- 预测提示 -->
-  <div id="plist">
-
-  </div>
-  <!-- 预测提示end -->
- 
-
-
-  </div>
-
-  <div class="col-md-5 col-xl-6 main-content">
-    <div id="test-editormd">
-      <textarea style="display:none;"></textarea>
     </div>
-    <p class='tips'>按下Tab键获取人工智能建议</p>
+
   </div>
-
-
-  <div class="col-md-3 col-xl-3 r-sidebar">
-<h2>知识拓展</h2>
-  <!-- 知识信息 -->
-  <div id="marker-tags">
-    
-  </div>
-  <!-- 知识信息end -->
-    <!-- 知识信息 -->
-    <div id="marker-box">
-      <div class="accordion" id="marker">
-      </div>
-    </div>
-    <!-- 知识信息end -->
-    </div>
-    
-
-
-
-
-
-
-
-
-</div>
-</div>
-
-</div>
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/editor.md/editormd.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
   <script type="text/javascript">
     var testEditor;
 
     $(function () {
 
-      window.sessionStorage.setItem('tab_task_time',Date.now())
+      window.sessionStorage.setItem('tab_task_time', Date.now())
 
       TEditormd = editormd("test-editormd", {
         width: "100%",
         height: 740,
-        watch:false,
+        watch: false,
         syncScrolling: "single",
         path: "/static/editor.md/lib/",
         disabledKeyMaps: [
@@ -224,56 +256,56 @@ div#marker {
           this.addKeyMap(keyMap2);
           this.removeKeyMap(keyMap2);  // remove signle key
         },
-        onchange : function() {
-                        // $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
-                        // console.log("onchange =>", this, this.id, this.settings, this.state);
-                        // // 在输入后自动执行预测
-                        // console.log("自动执行")
-                        // var now=Date.now()
-            
-                        
-                        // var tab_task = window.sessionStorage.getItem('tab_task')
-                        // var tab_task_time=window.sessionStorage.getItem('tab_task_time')
-                        // console.log("时间差值",now-tab_task_time)
+        onchange: function () {
+          // $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
+          // console.log("onchange =>", this, this.id, this.settings, this.state);
+          // // 在输入后自动执行预测
+          // console.log("自动执行")
+          // var now=Date.now()
 
-                        // if (now-tab_task_time>=1000*5){
-                      
-                        
-                        // if (tab_task==true && now-tab_task_time<1000*60*10){
-                        //   console.log("后台有任务运行")
-                        // } else if (tab_task==true && now-tab_task_time>=1000*60*10){
-                        //   console.log("时间差值",now-tab_task_time)
-                        //   autotab();
-                        // } else if (tab_task==false && now-tab_task_time<1000*10){
-                        //   console.log("小于10s")
-            
-                        //   // autotab();
-                         
-                        // }else{
-                        //   autotab();
-                        // }
-                    
-                        // }else{
-                        //   console.log("小于1w")
-                        // }
-                        // var v=window.localStorage.getItem('versions')
-                        // var n_v=Number(v)+1
-                        //  window.localStorage.setItem('versions',n_v)
-                        //  window.localStorage.setItem('versions'+n_v,TEditormd.getMarkdown())
-                        // // var now=Date.now()
-                        // // var data = window.localStorage.getItem('autotab_task')
-                        // // if (now-data>1000*30){
-                        // //   console.log("提交",now-data)
-                        // //   autotab() 
-                        // // }else{
-                        // //   console.log("过于频繁提交",now-data)
-                        // // }
-                        // // autotab()
-                        //     // timer = setTimeout(function(){
-                        //     //   autotab()
-                        //     // },10);
-                      
-                    }
+
+          // var tab_task = window.sessionStorage.getItem('tab_task')
+          // var tab_task_time=window.sessionStorage.getItem('tab_task_time')
+          // console.log("时间差值",now-tab_task_time)
+
+          // if (now-tab_task_time>=1000*5){
+
+
+          // if (tab_task==true && now-tab_task_time<1000*60*10){
+          //   console.log("后台有任务运行")
+          // } else if (tab_task==true && now-tab_task_time>=1000*60*10){
+          //   console.log("时间差值",now-tab_task_time)
+          //   autotab();
+          // } else if (tab_task==false && now-tab_task_time<1000*10){
+          //   console.log("小于10s")
+
+          //   // autotab();
+
+          // }else{
+          //   autotab();
+          // }
+
+          // }else{
+          //   console.log("小于1w")
+          // }
+          // var v=window.localStorage.getItem('versions')
+          // var n_v=Number(v)+1
+          //  window.localStorage.setItem('versions',n_v)
+          //  window.localStorage.setItem('versions'+n_v,TEditormd.getMarkdown())
+          // // var now=Date.now()
+          // // var data = window.localStorage.getItem('autotab_task')
+          // // if (now-data>1000*30){
+          // //   console.log("提交",now-data)
+          // //   autotab() 
+          // // }else{
+          // //   console.log("过于频繁提交",now-data)
+          // // }
+          // // autotab()
+          //     // timer = setTimeout(function(){
+          //     //   autotab()
+          //     // },10);
+
+        }
       });
 
       /*
@@ -293,8 +325,8 @@ div#marker {
 
       function autotab() {
         // var data = window.localStorage.setItem('autotab_task',Date.now())
-        var tab_task = window.sessionStorage.setItem('tab_task',true)
-        window.sessionStorage.setItem('tab_task_time',Date.now())
+        var tab_task = window.sessionStorage.setItem('tab_task', true)
+        window.sessionStorage.setItem('tab_task_time', Date.now())
         console.log("执行tab函数!")
         var getCursor = TEditormd.getCursor()
         // plist()
@@ -305,26 +337,28 @@ div#marker {
         // console.log("获取当前位置getCursor =>", getCursor.line);
         var now_ch = getCursor.ch;
         var now_line = getCursor.line;
-        TEditormd.setSelection({line:now_line-1, ch:10}, {line:now_line, ch:now_ch});
+        TEditormd.setSelection({ line: now_line - 1, ch: 10 }, { line: now_line, ch: now_ch });
         var pline = $("#pline").val();
-        
+
         // console.log("getSelection =>", TEditormd.setSelection({ line: now_line - pline, ch: 0 }, { line: now_line, ch: now_ch }));
         // console.log("获取的内容getSelection =>", TEditormd.getSelection());
         text = TEditormd.getSelection()
-        TEditormd.setSelection({line:0, ch:0}, {line:0, ch:0});
+        TEditormd.setSelection({ line: 0, ch: 0 }, { line: 0, ch: 0 });
         getplist(text)
         // TEditormd.setSelection()
-        
+
         TEditormd.focus();
-        TEditormd.setCursor({line:now_line, ch:now_ch});
- 
+        TEditormd.setCursor({ line: now_line, ch: now_ch });
+
       }
       function tab() {
-        var tab_task = window.sessionStorage.setItem('tab_task',true)
-        window.sessionStorage.setItem('tab_task_time',Date.now())
+
+
+        var tab_task = window.sessionStorage.setItem('tab_task', true)
+        window.sessionStorage.setItem('tab_task_time', Date.now())
         console.log("执行tab函数!")
-        var loading='<div id="pre_loading" class="spinner-border text-success" role="status">  <span class="sr-only">Loading...</span></div>'
-        $("#plist").html(loading).css("background","#fdf986")
+        var loading = '<div id="pre_loading" class="spinner-border text-success" role="status">  <span class="sr-only">Loading...</span></div>'
+        $("#plist").html(loading).css("background", "#fdf986")
         var getCursor = TEditormd.getCursor()
         // plist()
 
@@ -351,6 +385,8 @@ div#marker {
       }
 
       function getplist(text) {
+         //sdsa
+        socket.emit('获取摘要',{data: text.slice(-20)});
         //    var text = '测试狗子'
         var plen = $("#plen").val();
         var n = $("#n").val();
@@ -362,14 +398,14 @@ div#marker {
 
         })
           .done(function (data) {
-            var tab_task = window.sessionStorage.setItem('tab_task',false)
+            var tab_task = window.sessionStorage.setItem('tab_task', false)
             console.log("执行后台完毕,释放预测限制")
             console.log(data.items)
             window.localStorage.setItem('plist', JSON.stringify(data))
             plist(data.items)
-            $("#plist").css("background","#fafafa")
+            $("#plist").css("background", "#fafafa")
             // text.
-            text=TEditormd.getValue()
+            text = TEditormd.getValue()
             getmarker(text)
 
 
@@ -410,79 +446,79 @@ div#marker {
       }
 
       function markerlist(items) {
-        tags=""
+        tags = ""
         // console.log('items',items)
         words = ""
         // words = "<div  class='kg'>"
         $.each(items, function (index, value) {
           console.log(index, value)
           // words = words + "<h3 class='ner-"+index+"'>" +value['type'] + ':' + value['word'] + "</h3>"
-          words = words +'  <div class="card">'
+          words = words + '  <div class="card">'
           // if (value['word']['type']==undefined){
           //   words=words+"<dt>"+value['word']['type']+':'+value['word']['words']+"</dt>"
           // }
-          
+
           words = words + ""
           var info = ''
-          var n=0
+          var n = 0
           try {
             $.each(value['kg'], function (index1, value1) {
 
-                  
-              info=info+'<dt>'+index1+'</dt><dd>'
+
+              info = info + '<dt>' + index1 + '</dt><dd>'
               try {
                 $.each(value1, function (i, v) {
                   info = info + i + ","
-                  n=n+1
+                  n = n + 1
                 })
               }
               catch (err) {
                 // document.getElementById("demo").innerHTML = err.message;
               }
-              info=info+'</dd>'
-  
+              info = info + '</dd>'
+
             })
           }
           catch (err) {
             // document.getElementById("demo").innerHTML = err.message;
           }
-          if (n>0){
+          if (n > 0) {
 
-            tags=tags +'<span  class="badge badge-success" data-toggle="collapse" data-target="#collapse'+index+'" aria-expanded="false" aria-controls="collapse'+index+'"  >'+ value['word'] +n+'</span>'
-          }else{
+            tags = tags + '<span  class="badge badge-success" data-toggle="collapse" data-target="#collapse' + index + '" aria-expanded="false" aria-controls="collapse' + index + '"  >' + value['word'] + n + '</span>'
+          } else {
 
-            tags=tags +'<span  class="badge badge-secondary" data-toggle="collapse" data-target="#collapse'+index+'" aria-expanded="false" aria-controls="collapse'+index+'"  >'+ value['word'] +n+'</span>'
+            tags = tags + '<span  class="badge badge-secondary" data-toggle="collapse" data-target="#collapse' + index + '" aria-expanded="false" aria-controls="collapse' + index + '"  >' + value['word'] + n + '</span>'
           }
-        
 
-        // #这里是头部
-        // if (n==0){
-        //         words = words +' <div class="card-header" id="heading'+index+'"> <h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+index+'" aria-expanded="false" aria-controls="collapse'+index+'">' + value['word']  +' </button></h2></div>'
-        //       }else{
-        //         var badge='<span class="badge badge-success">'+n+'</span>'
-        //         words = words +' <div class="card-header" id="heading'+index+'"> <h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+index+'" aria-expanded="false" aria-controls="collapse'+index+'">' + value['word']  +badge+' </button></h2></div>'
-      
-        //       }
-            if (index===0){
 
-              words = words + '<div id="collapse'+index+'" class="collapse show" aria-labelledby="heading'+index+'" data-parent="#marker"> <div class="card-body">'
-                            +'<h3>'+ value['word'] +n+'</h3>'
-                                +'<dl>'
-                                + info 
-                                +'</dl>'
-                                + "</div></div>"  
-            }else{
+          // #这里是头部
+          // if (n==0){
+          //         words = words +' <div class="card-header" id="heading'+index+'"> <h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+index+'" aria-expanded="false" aria-controls="collapse'+index+'">' + value['word']  +' </button></h2></div>'
+          //       }else{
+          //         var badge='<span class="badge badge-success">'+n+'</span>'
+          //         words = words +' <div class="card-header" id="heading'+index+'"> <h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+index+'" aria-expanded="false" aria-controls="collapse'+index+'">' + value['word']  +badge+' </button></h2></div>'
 
-              words = words + '<div id="collapse'+index+'" class="collapse" aria-labelledby="heading'+index+'" data-parent="#marker"> <div class="card-body">' 
-                                  +'<h3>'+ value['word'] +n+'</h3>'
-                                +'<dl>'
-                                + info 
-                                +'</dl>'
-                                + "</div></div>"
+          //       }
+          if (index === 0) {
 
-            }
+            words = words + '<div id="collapse' + index + '" class="collapse show" aria-labelledby="heading' + index + '" data-parent="#marker"> <div class="card-body">'
+              + '<h3>' + value['word'] + n + '</h3>'
+              + '<dl>'
+              + info
+              + '</dl>'
+              + "</div></div>"
+          } else {
 
-            words = words +  "</div>"
+            words = words + '<div id="collapse' + index + '" class="collapse" aria-labelledby="heading' + index + '" data-parent="#marker"> <div class="card-body">'
+              + '<h3>' + value['word'] + n + '</h3>'
+              + '<dl>'
+              + info
+              + '</dl>'
+              + "</div></div>"
+
+          }
+
+          words = words + "</div>"
 
 
 
@@ -507,15 +543,15 @@ div#marker {
         var or = TEditormd.getSelection()
         // or=   removesp(or)
         var data = JSON.parse(window.localStorage.getItem('plist'))
-        var original=data.original
-        if (original.length>10){
-          var pre=original.substr(original.length-10,original.length)
-        }else{
-          var pre=original
+        var original = data.original
+        if (original.length > 10) {
+          var pre = original.substr(original.length - 10, original.length)
+        } else {
+          var pre = original
         }
-        var listhtml="<div class='pre-shot'><span='label'>前文:</span>..."+pre+"</div>"
-         listhtml = listhtml+"<ul id='plist_ul'>"
-    
+        var listhtml = "<div class='pre-shot'><span='label'>前文:</span>..." + pre + "</div>"
+        listhtml = listhtml + "<ul id='plist_ul'>"
+
 
         $.each(items, function (index, value) {
           // console.log("准备or:",or)
@@ -530,16 +566,16 @@ div#marker {
           // console.log(marked_text_next)
           marked_text = marked_text_next + '</div>';
           //  alert(i+"..."+value);
-          if (index==0){
+          if (index == 0) {
             // listhtml = listhtml + "<li class='it active it-"+index+"' data-text='" + index + "'>" + marked_text + "</li>" 
-            listhtml = listhtml + "<li class='it it-"+index+"' data-text='" + index + "'>" + value + "</li>" 
-          }else{
-            listhtml = listhtml + "<li class='it it-"+index+"' data-text='" + index + "'>" + value + "</li>"
+            listhtml = listhtml + "<li class='it it-" + index + "' data-text='" + index + "'>" + value + "</li>"
+          } else {
+            listhtml = listhtml + "<li class='it it-" + index + "' data-text='" + index + "'>" + value + "</li>"
           }
-          
+
         });
         listhtml = listhtml + "</ul>"
- 
+
         //     `
         // $("#plist").html(listhtml).show().css({ "left": Math.abs(coordinate.x) + 10 + "px", "top": Math.abs(coordinate.y) + 40 + "px" })
         $("#plist").html(listhtml)
@@ -623,69 +659,143 @@ div#marker {
 
 
 
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/tapi');
+
+    $(document).ready(function(){
+      socket.on('预测摘要', function(msg) {
+        console.log(msg)
+        
+        html = '<div class="row"><h4 class="it">' + msg.data.title + '</h4>'
+        html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        // html = ''
+        $.each(msg.data.sumy, function (index, value) {
+          // content_list
+          html = html + '<p class="it"> ' + value + '</p>'
+          // if ( msg.data.sumy.indexOf(value) !=-1) {
+          // html = html + '<p class="it"> ' + value + '</p>'
+          // }else{
+          //   html = html + '<p class="it c"> ' + value + '</p>'
+          // }
+        })
+
+        html=html + '</div>'
+        $('#serach-rs').append(html)
+        // $('#serach-rs').prepend(html)
+      })
 
 
-    // $(function() {
-    //     testEditor = editormd("test-editormd", {
-    //         width  : "90%",
-    //         height : 720,
-    //         path   : '../lib/',
-    //         onchange : function() {
-    //             $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
-    //             console.log("onchange =>", this, this.id, this.settings, this.state);
-    //         }
-    //     });
-    // });
+
+      socket.on('搜索句子', function(msg) {
+        console.log(msg)
+        // html = '<li class="row">'
+        html=''
+          // <h4 class="it">' + msg.data.title + '</h4>
+        // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
+        html=html +'<li data-text="'+msg.data.content+'" class="sent">'+ msg.data.highlights+ '</li>'
+        // content
+
+        // html=html + '</li>'
+        $('#serach-sent ol').prepend(html)
+        // $('#serach-rs').prepend(html)
+      })
+
+
+
+
+
+
+
+    })
+    $(document).on('click', '#serach-sent .sent', function () {
+
+
+var text = $(this).data('text');
+
+var or = TEditormd.getSelection()
+// 插入
+TEditormd.insertValue(or + "" + text);
+// 替换选中
+// TEditormd.replaceSelection(text+"");
+// TEditormd.focus();
+
+})
+
+
+    $(document).on('click', '.it', function () {
+
+
+var text = $(this).text();
+
+var or = TEditormd.getSelection()
+// 插入
+TEditormd.insertValue(or + "" + text);
+// 替换选中
+// TEditormd.replaceSelection(text+"");
+// TEditormd.focus();
+
+})
+
+
+// 搜索关键词
+    $(document).on('click', '#serachkeywords', function () {
+      console.log("获取摘要")
+      socket.emit('获取摘要',{data:$("#serachkeywords_input").val()});
+      $("#serach-rs").html("")
+      $('#serach-sent ol').html('')
+
+    })
+
 
 
 
     $(document).on('click', '#getkeywords', function () {
 
 
-    var  text=TEditormd.getMarkdown()
-    $.post("/json/get/keywords", {
+      var text = TEditormd.getMarkdown()
+      $.post("/json/get/keywords", {
         // 'text': text + "", 'plen': plen, 'n': n
-          'text': text
+        'text': text
 
       })
         .done(function (data) {
           console.log(data)
-          keywords_text=''
-          $.each(data, function (index,value){
-            keywords_text=keywords_text+value['word']+"，"
+          keywords_text = ''
+          $.each(data, function (index, value) {
+            keywords_text = keywords_text + value['word'] + "，"
           })
 
-          TEditormd.setValue(" [KW] "+keywords_text)
+          TEditormd.setValue(" [KW] " + keywords_text)
 
 
 
         })
 
-})
-
-$(document).on('click', '#getkeyseq', function () {
-
-
-var  text=TEditormd.getMarkdown()
-$.post("/json/get/keyseq", {
-    // 'text': text + "", 'plen': plen, 'n': n
-      'text': text
-
-  })
-    .done(function (data) {
-      console.log(data)
-      keywords_text=''
-      $.each(data, function (index,value){
-        keywords_text=keywords_text+value['text']+"。"
-      })
-
-      TEditormd.setValue(" [KW] "+keywords_text)
-
-
-
     })
 
-})
+    $(document).on('click', '#getkeyseq', function () {
+
+
+      var text = TEditormd.getMarkdown()
+      $.post("/json/get/keyseq", {
+        // 'text': text + "", 'plen': plen, 'n': n
+        'text': text
+
+      })
+        .done(function (data) {
+          console.log(data)
+          keywords_text = ''
+          $.each(data, function (index, value) {
+            keywords_text = keywords_text + value['text'] + "。"
+          })
+
+          TEditormd.setValue(" [KW] " + keywords_text)
+
+
+
+        })
+
+    })
 
 
     $(document).on('click', '#plist li.it', function () {
@@ -723,42 +833,42 @@ $.post("/json/get/keyseq", {
 
 
     var x = 0;//水平方向位移
-var y = 0;//垂直方向位移
-$(document).keydown(function (event) {
- 
-  switch(event.keyCode) {
-     case 38:
-        console.log("up")
-        $(".it.active").removeClass("active").prev().addClass("active")
+    var y = 0;//垂直方向位移
+    $(document).keydown(function (event) {
 
-        break;
-      case 40:
-        console.log("down")
-        $(".it.active").removeClass("active").next().addClass("active")
-        break;
-      case 13:
-        console.log("回车")
-        // var id=  $(".it.active").data('text')
- 
-        // var data = JSON.parse(window.localStorage.getItem('plist'))
-        // // console.log('data',data)
-        // var text = data.items[id]
-        // var or = TEditormd.getSelection()
-        // // console.log("准备or:",or)
-        // // text=text.replace(or,or+'');
-        // // text=text+'';
-        // // console.log("准备插入:",text)
-        // // 插入
-        // TEditormd.insertValue(or + "" + text);
-        // $("#plist").hide()
-        // $(".it.active").removeClass("active")
-        break;
-     default:
-        console.log("")
-} 
+      switch (event.keyCode) {
+        case 38:
+          console.log("up")
+          $(".it.active").removeClass("active").prev().addClass("active")
+
+          break;
+        case 40:
+          console.log("down")
+          $(".it.active").removeClass("active").next().addClass("active")
+          break;
+        case 13:
+          console.log("回车")
+          // var id=  $(".it.active").data('text')
+
+          // var data = JSON.parse(window.localStorage.getItem('plist'))
+          // // console.log('data',data)
+          // var text = data.items[id]
+          // var or = TEditormd.getSelection()
+          // // console.log("准备or:",or)
+          // // text=text.replace(or,or+'');
+          // // text=text+'';
+          // // console.log("准备插入:",text)
+          // // 插入
+          // TEditormd.insertValue(or + "" + text);
+          // $("#plist").hide()
+          // $(".it.active").removeClass("active")
+          break;
+        default:
+          console.log("")
+      }
 
 
-});
+    });
 
   </script>
   <div class="container">
@@ -768,45 +878,45 @@ $(document).keydown(function (event) {
     <div id="settings-box" class="pdo_tools modal">
       <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
-         
+
       </div>
       <div class="modal-body">
         <form>
- 
-            <div class="form-row">
-              <label for="validationServer01">预测字数</label>
-              <input type="number" id="plen" value='100' class="form-control is-valid" id="validationServer01"
-                placeholder="First name" required>
-              <div class="valid-feedback">
-                Looks good!
-              </div>
+
+          <div class="form-row">
+            <label for="validationServer01">预测字数</label>
+            <input type="number" id="plen" value='100' class="form-control is-valid" id="validationServer01"
+              placeholder="First name" required>
+            <div class="valid-feedback">
+              Looks good!
             </div>
-            <div class="form-row">
-              <label for="validationServer02">预测条数</label>
-              <input type="number" class="form-control is-valid" id="n" placeholder="" value="5" required>
-              <div class="valid-feedback">
-                Looks good!
-              </div>
+          </div>
+          <div class="form-row">
+            <label for="validationServer02">预测条数</label>
+            <input type="number" class="form-control is-valid" id="n" placeholder="" value="5" required>
+            <div class="valid-feedback">
+              Looks good!
             </div>
-            <div class="form-row">
-              <label for="validationServer02">向前预测范围(行数)</label>
-              <input type="number" class="form-control is-valid" id="pline" placeholder="" value="100" required>
-              <div class="valid-feedback">
-                Looks good!
-              </div>
+          </div>
+          <div class="form-row">
+            <label for="validationServer02">向前预测范围(行数)</label>
+            <input type="number" class="form-control is-valid" id="pline" placeholder="" value="100" required>
+            <div class="valid-feedback">
+              Looks good!
             </div>
-     
+          </div>
+
 
         </form>
 
       </div>
       <div class="modal-footer">
-          <button id="settingsclose" type="button" class="btn btn-default settings close">关闭</button>
-       
+        <button id="settingsclose" type="button" class="btn btn-default settings close">关闭</button>
+
       </div>
     </div>
 
-    </div>
+  </div>
 
   </div>
 

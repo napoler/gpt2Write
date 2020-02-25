@@ -1,6 +1,6 @@
 
 from flask import Flask, render_template, request, json, Response, jsonify,escape
-from generate import *
+# from generate import *
 from bulid_data import *
 import tkitDb,tkitText,tkitFile,tkitNlp
 from flask_limiter import Limiter
@@ -15,6 +15,8 @@ import tkitW2vec
 import tkitMarker,tkitDb,tkitText
 import os
 from fun import *
+
+
 
 from config import *
 import gc
@@ -69,7 +71,7 @@ def get_predict(text,plen,n,start,end,key=None):
         tid=ttext.md5(tid)
     else:
         tid=key
-   
+
     if start !=None:
         start_clip=" --start "+str(start)
     else:
@@ -78,12 +80,24 @@ def get_predict(text,plen,n,start,end,key=None):
     print("开始处理: "+cmd)
     # print(subprocess.call(cmd, shell=True))
     if subprocess.call(cmd, shell=True)==0:
-        return get_temp(tid)['value']
+        return get_temp(tid)['value'].get("text")
     else:
-        return {}
+        return []
+# def get_predict(text, plen, n, start, end, key=None):
+#     ai = Ai()
+#     load_model = ai.load_model()
+#     args={"start":start,'end':end,'nsamples':n,'length':plen}
+#     try:
+#         data=ai.ai(text=text,args=args,key=key,load_model=load_model)
 
+#         model,_=load_model
+#         model.cpu()
+#         torch.cuda.empty_cache()
+#         del model
+#         return data
+#     except:
+#         return []
 
-        
 
 @app.route('/')
 def index():
@@ -152,7 +166,7 @@ def json_predict():
     try:
         text_list=[]
 
-        for it in get_pre.get('text'):
+        for it in get_pre:
             text_list.append(it['all'])
 
         text_array={'original':text,
@@ -610,7 +624,53 @@ def addtitle(message):
     emit('预测反馈', {'state': 'success','step':'addtitle','data':data})
     
 
+@socketio.on('获取摘要', namespace='/tapi')
+def get_sumy_text(message):
+    keyword = message.get('data')
+ 
+    print(("keyword",keyword))
+    response = requests.post(
+        'http://localhost:6800/schedule.json',
+        params={'keyword': keyword,'project':'default','spider':'kgbot',"url_type":'all'},
+        )
+    try:
+        DB.keywords.insert_one({"_id":keyword,'value':keyword})
+        print('添加关键词',keyword)
+    except :
+        pass
+    if response.status_code ==200:
+        print("提交进程",response.json())
 
+    response = requests.get(
+        'http://0.0.0.0:6801/json/search_sent',
+        params={'keyword': keyword,'limit':50},
+    )
+    if response.status_code ==200:
+        items=response.json()
+        for  item in items:
+            print(item)
+
+            # print(l)
+            data=item
+            # data['sumy']=l
+            # data['content_list']=s
+            emit('搜索句子', {'state': 'success','step':'search_sent','data':data})
+    # 请求进程结果
+    response = requests.get(
+        'http://0.0.0.0:6801/json/search',
+        params={'keyword': keyword,'limit':50},
+    )
+    if response.status_code ==200:
+        items=response.json()
+        for  item in items:
+            print(item)
+            l,s=get_sumy(item['content'])
+            # print(l)
+            data=item
+            data['sumy']=l
+            data['content_list']=s
+            emit('预测摘要', {'state': 'success','step':'sumy','data':data})
+        pass
 
 
 # @app.route("/json/search",methods=['GET'])
@@ -683,11 +743,12 @@ def json_search(message):
     title_keys=[]
     rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3)
     for item in items:
+        print(item)
 
         p = rankclass.pre(item['title'])
         softmax=rankclass.softmax()
 
-        del rankclass
+        # del rankclass
         item['softmax']=softmax
         item['rank']=p
         # titles.append({"key":item['_id'],"title":item['title'],'rank':p,'softmax':softmax})
@@ -768,7 +829,7 @@ def json_search(message):
         if len(items)==0:
             response = requests.get(
                 'http://0.0.0.0:6801/json/search',
-                params={'keyword': keyword,'limit':5},
+                params={'keyword': keyword,'limit':10},
             )
             print("获取数据",response.status_code,{'keyword': keyword,'limit':5},)
             if response.status_code ==200:
@@ -813,9 +874,9 @@ def json_search(message):
                 keys.append(key)
                 emit('预测反馈', {'state': 'success','step':'log','data':"Ai预测标题中("+str(len(keys))+")"+str(i)}) 
                 pre_data= get_var(keyword)
-                if pre_data['value'].get('do')=="stop":
-                    print("已经停止")
-                    break
+                # if pre_data['value'].get('do')=="stop":
+                #     print("已经停止")
+                #     break
                 text=text[:400]
                 # pre_title=ai_title(text=text,key=keyword,nsamples=nsamples)
                 start='[PT]'
@@ -826,18 +887,18 @@ def json_search(message):
                 # if pre_title['text']==None:
                 #     continue
                 # print("pre_title",pre_title)
-                if "text" in pre_title.keys():
-                    pass
-                else:
-                    continue
-                for it in pre_title.get('text'):
+                # if "text" in pre_title.keys():
+                #     pass
+                # else:
+                #     continue
+                for it in pre_title:
                     if it.get("pt")==None:
                         continue
                     elif it['pt'] not in title_keys and it['pt'] != item['title'] and len(it['pt'])>3:
                         # print("it['pt']",it['pt'])
                         titles=[]
                         title_keys.append(it)
-                        rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3,device='cpu')
+                        rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3,device='cuda')
                         p = rankclass.pre(it['pt'])
                         softmax=rankclass.softmax()
                         one_data={"_id":tt.md5(it['pt']),"title":it['pt'],'key':keyword,'parent':key,'time':time.time(),'rank':p,'softmax':softmax,"state":'uncheck'}

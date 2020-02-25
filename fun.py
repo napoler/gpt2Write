@@ -225,8 +225,31 @@ def get_kg(text):
 #     # segs_pre.append(' [KW] '+'。'.join(s)+' [SEP] ')
 #     return s
 
+def get_sumy(text):
+    """
+    获取摘要
+    """
+    LANGUAGE = "chinese"
+    SENTENCES_COUNT = 10
+    stemmer = Stemmer(LANGUAGE)
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words(LANGUAGE)
+    parser = PlaintextParser.from_string(text, Tokenizer(LANGUAGE))
+    l=[]
+    # print(parser.document)
+    items=[]
+    # for s in parser.document:
+    #         items.append(s)
+    for sentence in summarizer(parser.document, SENTENCES_COUNT):
+        l.append(str(sentence))
+    # del sentence 
+    # try:
+    #     for s in parser.document:
+    #         items.append(s)
+    # except:
+    #     pass
 
-
+    return l,items
 def get_keyseq(text,num=20):
     """
     获取关键内容
