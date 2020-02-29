@@ -155,7 +155,7 @@ def main():
     #修改加载旧有的参数
     if os.path.exists(output_dir + 'final_model/scheduler.pt'):
         # 加载旧有参数
-        model.load_state_dict( torch.load(output_dir + 'final_model/scheduler.pt'))
+        scheduler.load_state_dict( torch.load(output_dir + 'final_model/scheduler.pt'))
     if os.path.exists(output_dir + 'final_model/optimizer.pt'):
         # 加载旧有参数
         optimizer.load_state_dict( torch.load(output_dir + 'final_model/optimizer.pt'))
