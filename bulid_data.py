@@ -37,6 +37,9 @@ import pymongo
 # import  macropodus
 import tiktThreading
 import jieba
+from albert_pytorch import classify
+
+
 def add_data(data,path='data/'):
     """
     添加数据样本
@@ -311,13 +314,16 @@ def data_pre_train_mongo( data_path='data/data.json',train_path='data/train_db.t
     article_max_len=500
     ttext=tkitText.Text()
 
+    jieba.load_userdict('dict.txt')
+    jieba.analyse.set_stop_words('stopwords.txt')
 
     stemmer = Stemmer(LANGUAGE)
     summarizer = Summarizer(stemmer)
     summarizer.stop_words = get_stop_words(LANGUAGE)
     # ie=tkitNlp.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
     f1 = open(train_path,'w')
-    articles=[]
+    # articles=[]
+    tt=tkitText.Text()
     # 引入TF-IDF关键词抽取接口
     tfidf = analyse.extract_tags
     # 引入TextRank关键词抽取接口
@@ -328,18 +334,63 @@ def data_pre_train_mongo( data_path='data/data.json',train_path='data/train_db.t
     print(DB.name)
     q={}
     # print('q',q)
-    for item in DB_kg_scrapy.kg_content.find(q):
+    tclass = classify(model_name_or_path='tkitfiles/check_pet',num_labels=10,device='cuda')
+    Ner=get_ner()
+    # nlp=Nlp()
+    i=0
+    # for item in DB_kg_scrapy.kg_content.find(q):
+    tjson=tkitFile.Json(file_path=data_path)
+    for item in tqdm(tjson.auto_load()):
+        i=i+1
+        if i%10000==0:
+            print(i)
         # print(item)
-        content=" [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+        if len(item['content'])>500:
+            SENTENCES_COUNT = 5
+        else:
+            SENTENCES_COUNT = 3
+        parser = PlaintextParser.from_string(item['content'], Tokenizer(LANGUAGE))
+        l=[]
+        words_list=[]
+        for sentence in summarizer(parser.document, SENTENCES_COUNT):
+            l.append(str(sentence))
+            # ner_list=Ner.pre(str(sentence))
+            # for it in ner_list[0][1]:
+            #     words_list.append(it.get("words"))
+        # keywords = textrank(item['title']+'\n'+item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v')) 
+        keywords = textrank(item['title']+'\n'+item['content'], topK=10, withWeight=False,) 
+        keyphrases =tt.get_keyphrases(item['title']+'\n'+item['content'])
+
+        # print("==="*20)
+        # print("",item['title'])
+        # print(item['content'][:100])
+        p=tclass.pre(item['content'])
+        # print("预测结果",p)
+        # softmax=tclass.softmax()
+        # print(softmax)
+        # sentences=tt.sentence_segmentation_v1( item['title']+'。'+item['content'])
+        # words_list=[]
+        # for sentence in sentences:
+        #     ner_list=Ner.pre(sentence)
+        #     for it in ner_list[0][1]:
+        #         words_list.append(it.get("words"))
+        # # print(words_list)
+        # keywords=keywords+keyphrases+words_list
+        keywords=keywords+keyphrases
+        keywords=list(set(keywords))
+        # print(ner_list)
+        content=" [KW] "+",".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT] [SM] "+"".join(l)+" [/SM] [CONTNET] "+item['content']+" [/CONTNET] [PT] "+ item['title']+" [/PT] [END]"
         content=content.replace("\n\n\n", "\n\n")
         content=content.replace("\n", " [SEP] ")
-        content_list=cut_text(content,480)
+        # print(content[:100])
+        # content_list=cut_text(content,480)
         # for it in content_list:
         #     print("++++"*20)
         #     print(it)
         # f1.write("\n".join(content_list)+"")
-        f1.write(content)
-        f1.write("\n")
+        if p==1:
+            f1.write(content)
+            f1.write("\n")
         #     print(len(it))
 
 

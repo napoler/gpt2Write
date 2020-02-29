@@ -153,12 +153,12 @@ def main():
     scheduler = pytorch_transformers.WarmupLinearSchedule(optimizer, warmup_steps=warmup_steps,
                                                           t_total=total_steps)
     #修改加载旧有的参数
-    if os.path.exists(output_dir + 'final_model/scheduler.pt'):
+    if os.path.exists(args.pretrained_model + '/scheduler.pt'):
         # 加载旧有参数
-        scheduler.load_state_dict( torch.load(output_dir + 'final_model/scheduler.pt'))
-    if os.path.exists(output_dir + 'final_model/optimizer.pt'):
+        scheduler.load_state_dict( torch.load(args.pretrained_model + '/scheduler.pt'))
+    if os.path.exists(args.pretrained_model + '/optimizer.pt'):
         # 加载旧有参数
-        optimizer.load_state_dict( torch.load(output_dir + 'final_model/optimizer.pt'))
+        optimizer.load_state_dict( torch.load(args.pretrained_model + '/optimizer.pt'))
 
 
 
