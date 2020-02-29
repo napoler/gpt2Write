@@ -135,11 +135,12 @@ def get_ner():
 # # 获取实体
 # MNer=get_ner()
 
-nlp=Nlp()
+
 def get_kg(text):
     """
     预测知识
     """
+    nlp=Nlp()
     MNer = get_ner()
     MRel = get_ner_rel()
     MDes = get_des()

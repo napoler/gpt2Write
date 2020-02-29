@@ -106,28 +106,66 @@ def index():
 @app.route('/edit')
 def edit():
     return render_template("edit.html")
-
+@app.route('/check/title',methods=['GET', 'POST'])
+def check_title():
+    title = request.args.get('title')
+    if title!=None:
+        rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=4)
+        rank = rankclass.pre(title)
+        softmax=rankclass.softmax()
+        grade=0
+        for  i ,r in enumerate(softmax):
+            grade=i*r+grade
+        
+        grade=grade/3*100
+        grade= round(grade, 2)         
+    
+    return render_template("check_title.html",**locals())
 @app.route('/titles',methods=['GET', 'POST'])
 def titles():
     page = request.args.get('page')
     state = request.args.get('state')
+    rank = request.args.get('rank')
+    keyword = request.args.get('keyword') 
     q={}
     skip=0
     limit=20
-    if page==None or page=='':
+    if page==None or page=='' or page=="None":
         page=0
         skip=0
     else:
         skip=limit*int(page)
         page=int(page)
         pass
-    if state==None or state=='':
+    if state==None or state=='' or state=="None":
         # items=DB.pre_titles.find({})
         pass
     else:
         # items=DB.pre_titles.find({"state":state})
         q['state']=state
         pass
+    if rank==None or rank=='' or rank=='None':
+        pass
+    else:
+        q['rank']=int(rank)
+        pass
+    if keyword==None or keyword=='' or keyword=="None":
+        pass
+    else:
+        # q['keyword']=keyword
+        q['$text']={'$search':keyword}
+        items=DB.pre_titles.find(q).limit(limit).skip(skip).sort('time',-1)
+        data={
+            'page':page,
+            'nextpage':page+1,
+            'prepage':page-1,
+            'state':state,
+            'items':items
+
+        }
+        return render_template("titles.html",**locals())
+        pass  
+    
     items=DB.pre_titles.find(q).limit(limit).skip(skip).sort('time',-1)
     # print(items)
     data={
@@ -138,7 +176,7 @@ def titles():
         'items':items
 
     }
-    return render_template("titles.html",data=data)    
+    return render_template("titles.html",**locals())
 # 获取预测结果
 @app.route("/json/predict",methods=['GET', 'POST'])
 # 自定义限制器覆盖了默认限制器
@@ -741,7 +779,7 @@ def json_search(message):
     items=DB.pre_titles.find({'key':keyword})
     titles=[]
     title_keys=[]
-    rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3)
+    rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=4)
     for item in items:
         print(item)
 
@@ -898,7 +936,7 @@ def json_search(message):
                         # print("it['pt']",it['pt'])
                         titles=[]
                         title_keys.append(it)
-                        rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3,device='cuda')
+                        rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=4,device='cuda')
                         p = rankclass.pre(it['pt'])
                         softmax=rankclass.softmax()
                         one_data={"_id":tt.md5(it['pt']),"title":it['pt'],'key':keyword,'parent':key,'time':time.time(),'rank':p,'softmax':softmax,"state":'uncheck'}

@@ -36,65 +36,35 @@
     <div class="row">
       <div class="col col-lg-8">
 
-        <form action="/titles" method="get" >
+        <form action="/check/title" method="get" >
           <div class="form-group">
             <label for="exampleInputEmail1">关键词</label>
-            <input type="text" class="form-control" name="keyword" id="keyword" aria-describedby="keyword" value="{{keyword}}">
-            <small id="emailHelp" class="form-text text-muted">输入关键词</small>
+            <input type="text" class="form-control" name="title" id="title" aria-describedby="title" value="{{title}}">
+            <small id="emailHelp" class="form-text text-muted">标题</small>
           </div>
         
-          <div class="form-group">
-            <label for="exampleFormControlSelect1">状态</label>
-            <select name="state" class="form-control" id="exampleFormControlSelect1">
-              <option value="{{state}}">{{state}}</option>
-              <option value="">不限制</option>
-              <option  value="good">good</option>
-              <option  value="uncheck">uncheck</option>
-            </select>
-          </div>
-        
-          <div class="form-group">
-            <label for="exampleFormControlSelect1">评级</label>
-            <select name="rank" class="form-control" id="exampleFormControlSelect1">
-              <option value="{{rank}}">{{rank}}</option>
-              <option value="">不限制</option>
-              <option  value="2">2</option>
-              <option  value="1">1</option>
-              <option  value="0">0</option>
-            </select>
-          </div>
-
-          <div class="form-group form-check">
-            <input type="checkbox" class="form-check-input" id="exampleCheck1">
-            <label class="form-check-label" for="exampleCheck1">Check me out</label>
-          </div>
-          <button type="submit" class="btn btn-primary">Submit</button>
+         
+          <button type="submit" class="btn btn-primary">检查</button>
         </form>
         
 
-        <h2>标题</h2>
 
-        <ul id="search_list" class="list-group  list-group-flush">
-          {% for item in data['items'] %}
-          <li class="list-group-item">{{item['rank']}}:( {{item['softmax'][2]}}) {{item['title']}}</li>
-          {% endfor %}
+        {% if title == None %}
+        <p>未提交</p>
 
-        </ul>
-
-
-
-        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-          <div class="btn-group mr-2" role="group" aria-label="First group">
-            <a href="/titles?state={{data['state']}}&page={{data['pretpage']}}&rank={{rank}}&keyword={{keyword}}" type="button"
-              class="btn btn-secondary">上一页</a>
-            <a href="/titles?state={{data['state']}}&page={{data['nextpage']}}&rank={{rank}}&keyword={{keyword}}" type="button"
-              class="btn btn-secondary">下一页</a>
-
-          </div>
-
-        </div>
-
-
+        {% else %}
+ <h3>标题</h3>
+ <p>{{title}}</p>
+ <h3>预测评级</h3>
+ <p>{{rank}}</p>
+ <h3>评级信息</h3>
+ 
+ <p>总分:{{grade}}（100）</p>
+ <p>3:{{softmax[3]}}</p>
+ <p>2:{{softmax[2]}}</p>
+ <p>1:{{softmax[1]}}</p>
+ <p>0:{{softmax[0]}}</p>
+    {% endif %}
 
 
 

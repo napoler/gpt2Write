@@ -214,6 +214,7 @@ class Ai:
         pass
     def load_model(self):
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cpu"
         tokenizer = tokenization_bert.BertTokenizer(vocab_file='model/mini/vocab.txt')
         model = GPT2LMHeadModel.from_pretrained('model/mini/')
         model.to(device)
@@ -363,6 +364,7 @@ class Ai:
     def ai(self,text='',args={},key='12312',load_model=None):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print("device",device)
+        device = "cpu"
         # device =  "cpu"
         model,tokenizer=load_model
 
@@ -591,7 +593,7 @@ class Ai:
                         #     text[i] = '\n标题: '
                     info = "=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40 + "\n"
                     print(info)
-                    print(data)
+                    # print(data)
                     text = ''.join(text).replace('##', '').strip()
                     print(text)
                     data_list.append(data)
@@ -624,7 +626,7 @@ class Ai:
             del all_text
             gc.collect()
             # return new
-            print(get_temp(args.tid))
+            # print(get_temp(args.tid))
             return data_list
 
 

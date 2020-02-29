@@ -11,7 +11,7 @@ from tqdm import tqdm
 from torch.nn import DataParallel
 from tokenizations.bpe_tokenizer import get_encoder
 import pre_process_data as ppd
-
+import pickle
 
 def build_files(data_path, tokenized_data_path, num_pieces, full_tokenizer, min_length):
     if ppd.is_default_file_type():  # 是否采用默认json类型，默认编码为utf-8
@@ -152,6 +152,17 @@ def main():
     optimizer = pytorch_transformers.AdamW(model.parameters(), lr=lr, correct_bias=True)
     scheduler = pytorch_transformers.WarmupLinearSchedule(optimizer, warmup_steps=warmup_steps,
                                                           t_total=total_steps)
+    #修改加载旧有的参数
+    if os.path.exists(output_dir + 'final_model/scheduler.pt'):
+        # 加载旧有参数
+        model.load_state_dict( torch.load(output_dir + 'final_model/scheduler.pt'))
+    if os.path.exists(output_dir + 'final_model/optimizer.pt'):
+        # 加载旧有参数
+        optimizer.load_state_dict( torch.load(output_dir + 'final_model/optimizer.pt'))
+
+
+
+
     if fp16:
         try:
             from apex import amp
@@ -265,8 +276,8 @@ def main():
         os.mkdir(output_dir + 'final_model')
     model_to_save = model.module if hasattr(model, 'module') else model
     model_to_save.save_pretrained(output_dir + 'final_model')
-    # torch.save(scheduler.state_dict(), output_dir + 'final_model/scheduler.pt')
-    # torch.save(optimizer.state_dict(), output_dir + 'final_model/optimizer.pt')
+    torch.save(scheduler.state_dict(), output_dir + 'final_model/scheduler.pt')
+    torch.save(optimizer.state_dict(), output_dir + 'final_model/optimizer.pt')
 
 
 if __name__ == '__main__':

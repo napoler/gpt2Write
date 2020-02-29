@@ -480,20 +480,21 @@ def get_one():
         # data.append(it)
         yield  item
         # 
-LANGUAGE = "chinese"
-SENTENCES_COUNT = 5
-# article_max_len=500
-tt=tkitText.Text()
-stemmer = Stemmer(LANGUAGE)
-summarizer = Summarizer(stemmer)
-summarizer.stop_words = get_stop_words(LANGUAGE)
+def load():
+    LANGUAGE = "chinese"
+    SENTENCES_COUNT = 5
+    # article_max_len=500
+    tt=tkitText.Text()
+    stemmer = Stemmer(LANGUAGE)
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words(LANGUAGE)
 
-jieba.load_userdict('dict.txt')
-jieba.analyse.set_stop_words('stopwords.txt')
-textrank = jieba.analyse.textrank
+    jieba.load_userdict('dict.txt')
+    jieba.analyse.set_stop_words('stopwords.txt')
+    textrank = jieba.analyse.textrank
 
-w2v=tkitW2vec.Word2vec()
-w2v.load(model_file=Word2vec_model)
+    w2v=tkitW2vec.Word2vec()
+    w2v.load(model_file=Word2vec_model)
 def add_one(args):
 # def add_one(args,se):
     # se.acquire()
