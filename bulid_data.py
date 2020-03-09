@@ -13,7 +13,7 @@ import csv
 from tqdm import tqdm
 import re
 import argparse
-
+from random import choice
 from config import  *
 
 from sumy.parsers.html import HtmlParser
@@ -644,18 +644,27 @@ def data_pre_train_mongo_summary( data_path='data/data.json',train_path='data/tr
         # tt.start()
 def data_pre_train_mongo_to_json( data_path='data/data.json',train_path='data/train_db_Summary.txt' ):
     """
+    将文章转化为json格式
     from=0  #文章开始id
     limit=10 # 返回文章数目
     >>>data_pre_train(from=0, limit=10)
  
  
     """
-
+    #检查宠物内容
+    petclass = classify(model_name_or_path='tkitfiles/petclass/',num_labels=2,device='cuda')
     i=0
     data=[]
     for item in get_one():
         i=i+1
-        data.append(item)
+        # print(item)
+        txt=item['title']+item['content']
+        p=petclass.pre(txt[:500])
+        item['class']=p
+        if p==1:
+            data.append(item)
+        if i%100==0:
+            print(i)
         if i%10000==0:
             print(i)
             try:
@@ -663,9 +672,79 @@ def data_pre_train_mongo_to_json( data_path='data/data.json',train_path='data/tr
                 data=[]
             except :
                 pass
+
     add_data(data)
-            
-        
+
+def data_pre_train_mongo_check_pet( ):
+    """
+    检查文章是不是pet
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+
+
+    """
+    #检查宠物内容
+    petclass = classify(model_name_or_path='tkitfiles/petclass/',num_labels=2,device='cuda')
+    i=0
+    n=0
+    data=[]
+    for item in get_one():
+
+        # print(item)
+        if DB.content_pet.find_one({"_id":item['_id']}):
+            pass
+        else:
+            i=i+1
+            txt=item['title']+item['content']
+            p=petclass.pre(txt[:500])
+            item['class']=p
+            if p==1:
+                n=n+1
+            try:
+                DB.content_pet.insert_one(item)
+                pass
+            except:
+                pass
+            if i%100==0:
+                print(n/i,i)
+
+
+def save_data(data,path='data/',name="train.json"):
+    """
+    保存数据
+    """
+    tkitFile.File().mkdir(path)
+    data_path=path+name
+    tjson=tkitFile.Json(file_path=data_path)
+    tjson.save(data)
+def data_pre_train_mongo_next_sentence( ):
+    """
+    构建下一句语料
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+
+
+    """
+    i=0
+    n=0
+    data=[]
+    tt=tkitText.Text()
+    for it in DB.content_pet.find({"class":1}):
+        # print(it)
+        data.append(it)
+        i=i+1
+        if  i%1000==0:
+            save_data(data,path='data/next_sentence/',name="data.json")
+            data=[]
+    save_data(data,path='data/next_sentence/',name="data.json")
+
+
+
+
+
+
 def data_pre_train_file(path='./data/'):
     """
     生成训练样本
@@ -766,6 +845,15 @@ def main():
         #导出为json
         # python bulid_data.py --do data_pre_train_mongo_to_json
         data_pre_train_mongo_to_json()
+    elif  args.do=='data_pre_train_mongo_check_pet':
+        #导出为json
+        # python bulid_data.py --do data_pre_train_mongo_to_json
+        data_pre_train_mongo_check_pet()
+    elif  args.do=='data_pre_train_mongo_next_sentence':
+        #保存宠物语料
+        # python bulid_data.py --do data_pre_train_mongo_next_sentence
+        data_pre_train_mongo_next_sentence()      
+        
     elif  args.do=='data_pre_train_mongo_Process':
         #导出为json
         # python bulid_data.py --do data_pre_train_mongo_Process

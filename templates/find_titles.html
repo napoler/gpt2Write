@@ -36,7 +36,7 @@
     <div class="row">
       <div class="col col-lg-8">
 
-        <form action="/titles" method="get" >
+        <form action="/find/titles" method="get" >
           <div class="form-group">
             <label for="exampleInputEmail1">关键词</label>
             <input type="text" class="form-control" name="keyword" id="keyword" aria-describedby="keyword" value="{{keyword}}">
@@ -86,9 +86,9 @@
 
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
           <div class="btn-group mr-2" role="group" aria-label="First group">
-            <a href="/titles?state={{data['state']}}&page={{data['pretpage']}}&rank={{rank}}&keyword={{keyword}}" type="button"
+            <a href="/find/titles?state={{data['state']}}&page={{data['pretpage']}}&rank={{rank}}&keyword={{keyword}}" type="button"
               class="btn btn-secondary">上一页</a>
-            <a href="/titles?state={{data['state']}}&page={{data['nextpage']}}&rank={{rank}}&keyword={{keyword}}" type="button"
+            <a href="/find/titles?state={{data['state']}}&page={{data['nextpage']}}&rank={{rank}}&keyword={{keyword}}" type="button"
               class="btn btn-secondary">下一页</a>
 
           </div>

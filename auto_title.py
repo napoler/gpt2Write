@@ -55,7 +55,7 @@ end='[/PT]'
 # end='[/PT]'
 data_path="/mnt/data/dev/github/scrapy/scrapy_baidu/scrapy_baidu/scrapy_baidu/data/all.json"
 tt=tkitText.Text()
-rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=3,device='cuda')
+rankclass = classify(model_name_or_path='tkitfiles/rank',num_labels=4,device='cuda')
 with open(data_path, 'r') as f:
     for i,line in enumerate(f):
         # print(it)

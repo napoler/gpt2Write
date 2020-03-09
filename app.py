@@ -17,6 +17,21 @@ import os
 from fun import *
 
 
+from sumy.parsers.html import HtmlParser
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+# from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+from sumy.summarizers.lex_rank import LexRankSummarizer as Summarizer
+
+from sumy.nlp.stemmers import Stemmer
+from sumy.utils import get_stop_words
+
+
+
+
+
+
+
 
 from config import *
 import gc
@@ -121,6 +136,58 @@ def check_title():
         grade= round(grade, 2)         
     
     return render_template("check_title.html",**locals())
+
+def get_rank(title):
+    """获取文字的评级"""
+    rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=4)
+    rank = rankclass.pre(title)
+    softmax=rankclass.softmax()
+    grade=0
+    for  i ,r in enumerate(softmax):
+        grade=i*r+grade
+    
+    grade=grade/3*100
+    grade= round(grade, 2)
+    return    rank,grade,softmax
+
+@app.route('/node',methods=['GET', 'POST'])
+def node_page():
+    nid = request.args.get('id')
+    KDB = client.kg_scrapy
+    items=KDB.kg_content.find_one({'_id':nid})
+    if items==None:
+        return "没有内容"
+    else: 
+ 
+        LANGUAGE = "chinese"
+        SENTENCES_COUNT = 10
+        stemmer = Stemmer(LANGUAGE)
+        summarizer = Summarizer(stemmer)
+        summarizer.stop_words = get_stop_words(LANGUAGE)
+        if len(items['content'])>500:
+            SENTENCES_COUNT = 5
+        else:
+            SENTENCES_COUNT = 3
+        parser = PlaintextParser.from_string(items['content'], Tokenizer(LANGUAGE))
+        summary=[]
+
+        for sentence in summarizer(parser.document, SENTENCES_COUNT):
+            summary.append(str(sentence))
+        titles=[]
+        titles_p=DB.pre_titles.find({"parent":items['_id']})
+        for item in titles_p:
+            irank,grade,softmax=get_rank(item['title'])
+            # print(irank,grade,softmax)
+            # print((items[i]))
+            item['rank']=irank
+            item['softmax']=softmax
+            item['grade']=grade
+            titles.append(item)
+
+        return render_template("node.html",**locals())
+    # newitems=[]
+    # for i,item in enumerate( items):
+
 @app.route('/titles',methods=['GET', 'POST'])
 def titles():
     page = request.args.get('page')
@@ -155,6 +222,15 @@ def titles():
         # q['keyword']=keyword
         q['$text']={'$search':keyword}
         items=DB.pre_titles.find(q).limit(limit).skip(skip).sort('time',-1)
+        newitems=[]
+        for i,item in enumerate( items):
+            irank,grade,softmax=get_rank(item['title'])
+            # print(irank,grade,softmax)
+            # print((items[i]))
+            item['rank']=irank
+            item['softmax']=softmax
+            item['grade']=grade
+            newitems.append(item)
         data={
             'page':page,
             'nextpage':page+1,
@@ -164,19 +240,107 @@ def titles():
 
         }
         return render_template("titles.html",**locals())
-        pass  
+ 
     
     items=DB.pre_titles.find(q).limit(limit).skip(skip).sort('time',-1)
     # print(items)
+    newitems=[]
+    for i,item in enumerate( items):
+        irank,grade,softmax=get_rank(item['title'])
+        # print(irank,grade,softmax)
+        # print((items[i]))
+        item['rank']=irank
+        item['softmax']=softmax
+        item['grade']=grade
+        # print(item)
+        newitems.append(item)
     data={
         'page':page,
         'nextpage':page+1,
         'prepage':page-1,
         'state':state,
-        'items':items
+        'items':newitems
 
     }
     return render_template("titles.html",**locals())
+
+
+@app.route('/find/titles',methods=['GET', 'POST'])
+def titles_find():
+    page = request.args.get('page')
+    state = request.args.get('state')
+    rank = request.args.get('rank')
+    keyword = request.args.get('keyword') 
+    q={}
+    skip=0
+    limit=20
+    if page==None or page=='' or page=="None":
+        page=0
+        skip=0
+    else:
+        skip=limit*int(page)
+        page=int(page)
+        pass
+    if state==None or state=='' or state=="None":
+        # items=DB.pre_titles.find({})
+        pass
+    else:
+        # items=DB.pre_titles.find({"state":state})
+        q['state']=state
+        pass
+    if rank==None or rank=='' or rank=='None':
+        pass
+    else:
+        q['rank']=int(rank)
+        pass
+    if keyword==None or keyword=='' or keyword=="None":
+        pass
+    else:
+        # q['keyword']=keyword
+        q['$text']={'$search':keyword}
+        items=DB.find_titles.find(q).limit(limit).skip(skip).sort('time',-1)
+        newitems=[]
+        for i,item in enumerate( items):
+            irank,grade,softmax=get_rank(item['title'])
+            # print(irank,grade,softmax)
+            # print((items[i]))
+            item['rank']=irank
+            item['softmax']=softmax
+            item['grade']=grade
+            newitems.append(item)
+        data={
+            'page':page,
+            'nextpage':page+1,
+            'prepage':page-1,
+            'state':state,
+            'items':items
+
+        }
+        return render_template("find_titles.html",**locals())
+ 
+    
+    items=DB.find_titles.find(q).limit(limit).skip(skip).sort('time',-1)
+    # print(items)
+    newitems=[]
+    for i,item in enumerate( items):
+        irank,grade,softmax=get_rank(item['title'])
+        # print(irank,grade,softmax)
+        # print((items[i]))
+        item['rank']=irank
+        item['softmax']=softmax
+        item['grade']=grade
+        # print(item)
+        newitems.append(item)
+    data={
+        'page':page,
+        'nextpage':page+1,
+        'prepage':page-1,
+        'state':state,
+        'items':newitems
+
+    }
+    return render_template("find_titles.html",**locals())
+
 # 获取预测结果
 @app.route("/json/predict",methods=['GET', 'POST'])
 # 自定义限制器覆盖了默认限制器

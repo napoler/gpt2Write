@@ -250,9 +250,9 @@ class Ai:
         with torch.no_grad():
             for _ in trange(length):
                 # print('generated',generated)
-                if len(generated[0])==512:
+                if len(generated[0])==1000:
                     # print(len(generated[0]))
-                    generated=generated[:,-510:]
+                    generated=generated[:,-950:]
                 else:
                     # print(len(generated[0]))
                     pass
@@ -389,8 +389,8 @@ class Ai:
         parser.add_argument('--length', default=length, type=int, required=False, help='生成长度')
         parser.add_argument('--batch_size', default=1, type=int, required=False, help='生成的batch size')
         parser.add_argument('--nsamples', default=nsamples, type=int, required=False, help='生成几个样本')
-        parser.add_argument('--temperature', default=0.7, type=float, required=False, help='生成温度')
-        parser.add_argument('--topk', default=50, type=int, required=False, help='最高几选一')
+        parser.add_argument('--temperature', default=0.8, type=float, required=False, help='生成温度')
+        parser.add_argument('--topk', default=10, type=int, required=False, help='最高几选一')
         parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
         # parser.add_argument('--model_config', default='config/model_config_small.json', type=str, required=False,
         #                     help='模型参数')
@@ -474,8 +474,8 @@ class Ai:
                             p_length=length-len(new)
                         else:
                             p_length=50
-                        if len(context_tokens)>450:
-                            context_tokens=context_tokens[-450:]
+                        if len(context_tokens)>950:
+                            context_tokens=context_tokens[-950:]
                         
                         out,state = self.generate(
                             model=model,
@@ -523,10 +523,11 @@ class Ai:
                     #     text=text[-length:]
                         # print('text',text)
                     data={'do':'text','text':''}
-                    # print("text",text)
+                    print("text",text)
                     text_all=''
 
                     for i, item in enumerate(text):
+                        # print(item)
                         if item == '[MASK]':
                             # text[i] = ''
                             pass
@@ -535,20 +536,31 @@ class Ai:
                            text_all=text_all+ '\n'
                         elif item  == '[END]':
                             # print('缓存')
-                           text_all=text_all+ item+'\n\n\n'
+                           text_all=text_all+ item+' [END] \n\n'
                            break
                         elif item == '[PT]':
                             # print("获取pt")
-                            text_all=text_all+ '\n #  前文标题：'
+                            text_all=text_all+ '\n #  [PT] '
                         elif item == '[/PT]':
-                            text_all=text_all+ '\n\n\n'
+                            text_all=text_all+ ' [/PT] \n'
                         elif item == '[TT]':
                             # print("获取pt")
-                            text_all=text_all+ '\n #  标题：'
+                            text_all=text_all+ '\n # [TT]'
                         elif item == '[/TT]':
-                            text_all=text_all+ '\n\n\n\n'
+                            text_all=text_all+ '\n  [/TT] \n'
+                        elif item == '[SM]':
+                            # print("获取pt")
+                            text_all=text_all+ '\n  [SM] '
+                        elif item == ' [/SM] \n':
+                            text_all=text_all+ ' [/SM] \n'
+                        elif item == '[CONTNET]':
+                            # print("获取pt")
+                            text_all=text_all+ '\n  [CONTNET] '
+                        elif item == '[/CONTNET]':
+                            text_all=text_all+ ' [/CONTNET] \n'
                         else:
                             text_all=text_all+item
+                    text_all = ''.join(text_all).replace('##', '').strip()
                     print("生成长度text_all:",len(text_all))
                     for i, item in enumerate(text):
                         # print(text[i])
