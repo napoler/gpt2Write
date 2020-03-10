@@ -2,7 +2,7 @@
 import tkitText
 import tkitFile
 from random import choice
-
+import argparse
 
 def save_data(data,path='data/',name="train.json"):
     """
@@ -26,6 +26,10 @@ def data_pre_train_mongo_next_sentence( ):
     i=0
     n=0
     data=[]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--limit', default=50000, type=int, required=False, help='长度限制')
+    args = parser.parse_args()
+
     tt=tkitText.Text()
     data_json=tkitFile.Json(file_path='data.json')
     for it in data_json.auto_load():
@@ -35,17 +39,17 @@ def data_pre_train_mongo_next_sentence( ):
         for i,sent in enumerate( sents):
             if i==0:
                 one={
-                    "sentence":it['title'],
-                    "sentence_b":sent,
-                    "label":1
+                    'sentence':it['title'],
+                    'sentence_b':sent,
+                    'label':1
                 }
                 data.append(one)
                 rand_sent=choice(sents)
                 if rand_sent !=sent:
                     one={
-                    "sentence":it['title'],
-                    "sentence_b":rand_sent,
-                    "label":0
+                    'sentence':it['title'],
+                    'sentence_b':rand_sent,
+                    'label':0
                 }                
                 data.append(one)
 
@@ -54,28 +58,33 @@ def data_pre_train_mongo_next_sentence( ):
             else:
                 pre_text="".join(pre_sents)
                 one={
-                    "sentence":pre_text[-200:],
-                    "sentence_b":sent,
-                    "label":1
+                    'sentence':pre_text[-200:],
+                    'sentence_b':sent,
+                    'label':1
                 }
                 data.append(one)
                 rand_sent=choice(sents)
                 if rand_sent !=sent:
                     one={
-                    "sentence":pre_text[-200:],
-                    "sentence_b":rand_sent,
-                    "label":0
+                    'sentence':pre_text[-200:],
+                    'sentence_b':rand_sent,
+                    'label':0
                 }                
                 data.append(one)
                 pre_sents.append(sent)
             # print(len(data))
-        if n%1000==0:
-            print("保存1000")
-            cut=int(len(data)*0.8)
-            save_data(data[:cut],path='data/',name="train.json")
-            save_data(data[cut:],path='data/',name="dev.json")
-            data=[]
+        if len(data)>args.limit:
+            break
+        if n%10000==0:
+            # print("保存10000")
+            pass
+ 
         n=n+1
-    save_data(data,path='data/',name="train.json")
-
-data_pre_train_mongo_next_sentence()
+    cut=int(len(data)*0.8)
+    save_data(data[:cut],path='data/',name="train.json")
+    save_data(data[cut:],path='data/',name="dev.json")
+    data=[]
+if __name__ == '__main__':
+    data_pre_train_mongo_next_sentence()
+    #--limit 长度限制
+    #python bulid下一句语料.py --limit 1000
