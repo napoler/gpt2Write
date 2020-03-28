@@ -459,9 +459,9 @@ def data_pre_train_mongo_kwseq( data_path='data/data.json',train_path='data/trai
 
 
     tt=tkitText.Text()
-    stemmer = Stemmer(LANGUAGE)
-    summarizer = Summarizer(stemmer)
-    summarizer.stop_words = get_stop_words(LANGUAGE)
+    # stemmer = Stemmer(LANGUAGE)
+    # summarizer = Summarizer(stemmer)
+    # summarizer.stop_words = get_stop_words(LANGUAGE)
     # ie=tkitNlp.TripleIE(model_path="/mnt/data/dev/model/ltp/ltp_data_v3.4.0")
     f1 = open(train_path,'w')
     articles=[]
@@ -483,28 +483,7 @@ def data_pre_train_mongo_kwseq( data_path='data/data.json',train_path='data/trai
         i=i+1
         if i==100:
             break
-        # print(item)
-        # for sent in tt.sentence_segmentation_v1(item['content']):
-        #     print("句子:",sent)
-        #     keywords=[]
-        #     # print(w2v.keywords([sent]))
-        #     try:
-        #         for word,rank in w2v.keywords(sent):
-        #             # print(word,"----》",rank )
-        #             keywords.append(word)
-        #     except :
-        #         pass
-        #     print(keywords)
-        # keywords=[]
-        #     # print(w2v.keywords([sent]))
-        # try:
-        #     for word,rank in w2v.keywords(item['content'])[:20]:
-        #         # print(word,"----》",rank )
-        #         keywords.append(word)
-        # except :
-        #     pass
 
-        # print('keywords1',keywords)
         try:
             keywords = textrank(item['content'], topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v')) 
             print('keywords2',keywords)
@@ -546,9 +525,13 @@ def load():
 
     w2v=tkitW2vec.Word2vec()
     w2v.load(model_file=Word2vec_model)
+
+jieba.load_userdict('dict.txt')
+jieba.analyse.set_stop_words('stopwords.txt')
+textrank = jieba.analyse.textrank
+
 def add_one(args):
-# def add_one(args,se):
-    # se.acquire()
+
     item=args['item']
     f1=args['f1']
 
@@ -556,7 +539,7 @@ def add_one(args):
         SENTENCES_COUNT = 5
     else:
         SENTENCES_COUNT = 3
-    sm=[]
+    # sm=[]
     # try:
     #     if len(item['content'])>500:
     #         SENTENCES_COUNT = 10
@@ -578,12 +561,12 @@ def add_one(args):
     #         sm.append(s)
     # except :
     #     pass
-    try:
-        sm=w2v.summary(item['content'],topn=SENTENCES_COUNT)
-    except :
-        pass
+    # try:
+    #     sm=w2v.summary(item['content'],topn=SENTENCES_COUNT)
+    # except :
+    #     pass
  
-    
+    tt=tkitText.Text()
     keywords=[]
     try:
         # # 基于TextRank算法进行关键词抽取
@@ -601,20 +584,15 @@ def add_one(args):
         keywords=keywords+keyphrases
         keywords=list(set(keywords))
     except :
+        print("cuowu")
         pass
 
     # print(keywords)
-    content=" [SM] "+"".join(sm)+" [/SM] [KW] "+" ".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
-    # content=" [KW] "+" ".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+    # content=" [SM] "+"".join(sm)+" [/SM] [KW] "+" ".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
+    content=" [KW] "+"，".join(keywords)+" [/KW]  [TT] "+ item['title']+" [/TT]  "+item['content']+" [PT] "+ item['title']+" [/PT] [END]"
     content=content.replace("\n\n\n", "\n\n")
-
     content=content.replace("\n", " [SEP] ")
 
-    # content_list=cut_text(content,480)
-    # for it in content_list:
-    #     print("++++"*20)
-    #     print(it)
-    # f1.write("\n".join(content_list)+"")
     f1.write(content)
     f1.write("\n")
     # se.release()
@@ -642,6 +620,66 @@ def data_pre_train_mongo_summary( data_path='data/data.json',train_path='data/tr
         add_one(args)
         # tt.load(add_one,args)
         # tt.start()
+
+def data_pre_train_mongo_to_json_kwseq( data_path='data/data.json',train_path='data/train_db_kwseq.txt' ):
+    """
+    将文章转化为 句子预测
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+ 
+ 
+    """
+    #检查宠物内容
+    # petclass = classify(model_name_or_path='tkitfiles/petclass/',num_labels=2,device='cuda')
+    i=0
+    data=[]
+    f1 = open(train_path,'w')
+    w2v=tkitW2vec.Word2vec()
+    w2v.load(model_file=Word2vec_model)
+    jieba.load_userdict('dict.txt')
+    jieba.analyse.set_stop_words('stopwords.txt')
+    textrank = jieba.analyse.textrank
+    for item in get_one():
+        i=i+1
+        # print(item)
+        # txt=item['title']+item['content']
+        # p=petclass.pre(txt[:500])
+        # item['class']=p
+        # data.append(item)
+        title=item['title']
+        title=title.replace('\n', '').replace('\r', '')
+        # # 基于TextRank算法进行关键词抽取
+        # for n in textrank(title+'', topK=10, withWeight=False, withFlag=True) :
+        #     print(n)
+        if len(title)>50:
+            continue
+        keywords = textrank(title+'', topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v','nr','nz','a','m','PER','f','ns','q','LOC','s','nt','an','ORG','t','nw','vn','TIME'))  
+        # keywords = textrank(title+'', topK=10, withWeight=False)  
+        # keywords=[]
+        # print(keywords)
+        # print("keywords1",keywords)
+        # # kws=w2v.keywords(item['title'])
+        # # for word,rank in kws:
+        # #     keywords.append(word)
+        # print("keywords",keywords)
+        content=" [KW] "+",".join(list(set(keywords)))+" [/KW]  [TT] "+ title+" [/TT]  "
+        # print(content)
+        if len(keywords)>0:
+            f1.write(content)
+            f1.write("\n")
+            if i%10000==0:
+                print(i)
+        #     add_data(data)
+        #     data=[]
+        # if i%10000==0:
+        #     print(i)
+        #     try:
+        #         add_data(data)
+        #         data=[]
+        #     except :
+        #         pass
+    add_data(data)
 def data_pre_train_mongo_to_json( data_path='data/data.json',train_path='data/train_db_Summary.txt' ):
     """
     将文章转化为json格式
@@ -674,6 +712,40 @@ def data_pre_train_mongo_to_json( data_path='data/data.json',train_path='data/tr
                 pass
 
     add_data(data)
+
+
+def data_pre_train_mongo_pet_to_json( data_path='data/data.json',train_path='data/train_db_Summary.txt' ):
+    """
+    将宠物文章转化为json
+    from=0  #文章开始id
+    limit=10 # 返回文章数目
+    >>>data_pre_train(from=0, limit=10)
+ 
+ 
+    """
+
+    i=0
+    data=[]
+    for item in DB.content_pet.find({}):
+        i=i+1
+        # print(item)
+        # txt=item['title']+item['content']
+        # p=petclass.pre(txt[:500])
+        p=item['class']
+        if p==1:
+            data.append(item)
+        if i%100==0:
+            print(i)
+        if i%10000==0:
+            print(i)
+            try:
+                add_data(data)
+                data=[]
+            except :
+                pass
+
+    add_data(data)
+
 
 def data_pre_train_mongo_check_pet( ):
     """
@@ -854,10 +926,18 @@ def main():
         # python bulid_data.py --do data_pre_train_mongo_next_sentence
         data_pre_train_mongo_next_sentence()      
         
+    elif  args.do=='data_pre_train_mongo_to_json_kwseq':
+        #生成标题素材
+        # python bulid_data.py --do data_pre_train_mongo_to_json_kwseq
+        data_pre_train_mongo_to_json_kwseq()      
     elif  args.do=='data_pre_train_mongo_Process':
         #导出为json
         # python bulid_data.py --do data_pre_train_mongo_Process
         data_pre_train_mongo_Process()
+    elif  args.do=='data_pre_train_mongo_pet_to_json':
+        #导出为宠物文章为json
+        # python bulid_data.py --do data_pre_train_mongo_pet_to_json
+        data_pre_train_mongo_pet_to_json()
 
 if __name__ == '__main__':
     main()

@@ -20,6 +20,54 @@ from tqdm import tqdm
 from harvesttext import HarvestText
 import os
 from tkitMarker import *
+
+
+
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search
+from elasticsearch_dsl import Q
+def search_content(keyword):
+    client = Elasticsearch()
+    q = Q("multi_match", query=keyword, fields=['title', 'body'])
+    # s = s.query(q)
+
+    # def search()
+    s = Search(using=client)
+    # s = Search(using=client, index="pet-index").query("match", content="金毛")
+    s = Search(using=client, index="pet-index").query(q)
+    response = s.execute()
+    return response
+    # for hit in response:
+    #     print(hit.meta)
+    #     print(hit.meta.score)
+    #     print(hit)
+
+def search_sent(keyword):
+    client = Elasticsearch()
+    q = Q("multi_match", query=keyword, fields=['title', 'content'])
+    s = Search(using=client)
+    # s = Search(using=client, index="pet-index").query("match", content="金毛")
+    s = Search(using=client, index="pet-sent-index").query(q)
+    response = s.execute()
+    return response
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Nlp:
     """
     自动标记知识

@@ -15,6 +15,7 @@ import tkitW2vec
 import tkitMarker,tkitDb,tkitText
 import os
 from fun import *
+from libs import *
 
 
 from sumy.parsers.html import HtmlParser
@@ -27,9 +28,7 @@ from sumy.nlp.stemmers import Stemmer
 from sumy.utils import get_stop_words
 
 
-
-
-
+from albertk import *
 
 
 
@@ -78,7 +77,17 @@ def get_post_data():
     except :
         pass
     return data
-def get_predict(text,plen,n,start,end,key=None):
+def get_predict(text,plen,n,start,end,key=None,model_path=None):
+    if model_path!=None:
+        tokenizer_path=" --tokenizer_path "+str(model_path)+"vocab.txt"
+        model_config=" --model_config "+str(model_path)+"config.json"    
+        model_path=" --model_path "+str(model_path)
+
+    else:
+        model_path=''
+        tokenizer_path=''
+        model_config=''
+
     if key ==None:
 
         ttext=tkitText.Text()
@@ -91,7 +100,7 @@ def get_predict(text,plen,n,start,end,key=None):
         start_clip=" --start "+str(start)
     else:
         start_clip=''
-    cmd = "python3 ./generate.py --prefix '''"+text+"''' --length " +str(plen)+" --nsamples "+str(n)+" --tid '''"+str(tid)+"''' --end "+str(end)+start_clip
+    cmd = "python3 ./generate.py --prefix '''"+text+"''' --length " +str(plen)+" --nsamples "+str(n)+" --tid '''"+str(tid)+"''' --end "+str(end)+start_clip+" "+ model_path+" "+ model_config+" "+ tokenizer_path
     print("开始处理: "+cmd)
     # print(subprocess.call(cmd, shell=True))
     if subprocess.call(cmd, shell=True)==0:
@@ -747,6 +756,64 @@ def json_bulid_train():
     data=data_pre_train_file()
     return jsonify(data)
 import time
+import jieba
+
+            
+@app.route("/get/title",methods=['GET'])
+def get_title():
+    """
+    构建训练数据
+    """
+    jieba.load_userdict('dict.txt')
+    jieba.analyse.set_stop_words('stopwords.txt')
+    textrank = jieba.analyse.textrank
+
+    keyword = request.args.get('keyword')
+    pre_title = request.args.get('pre_title')
+    if pre_title!=None and keyword==None:
+        kw = textrank(pre_title+'', topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v','nr','nz','a','m','PER','f','ns','q','LOC','s','nt','an','ORG','t','nw','vn','TIME'))  
+        keyword=",".join(kw)
+    elif pre_title!=None and keyword!=None:
+        # keyword.append()
+        kw = textrank(pre_title+'', topK=10, withWeight=False, allowPOS=('ns', 'n', 'vn', 'v','nr','nz','a','m','PER','f','ns','q','LOC','s','nt','an','ORG','t','nw','vn','TIME'))  
+        keyword=keyword+",".join(kw)
+
+        
+
+        
+
+
+    if keyword ==None:
+        return render_template("get_title.html",**locals())
+        pass
+    else:
+        tt=tkitText.Text()
+        keywords=" [KW] "+keyword +" [/KW] "
+        start='[TT]'
+        end='[/TT]'
+        nsamples=20
+        model_path="model/title/"
+        key=tt.md5(keywords)
+        titles_p=get_predict(keywords,100,nsamples,start,end,key,model_path)
+        # print("titles",len(titles))
+        titles=[]
+        for item in titles_p:
+            irank,grade,softmax=get_rank(item['tt'])
+            # print(irank,grade,softmax)
+            # print((items[i]))
+            item['rank']=irank
+            item['softmax']=softmax
+            item['grade']=grade
+            titles.append(item)
+        return render_template("get_title.html",**locals())
+
+
+
+
+
+
+
+
 
 # from gensim.models import KeyedVectors
 # from threading import Semaphore
@@ -826,11 +893,146 @@ def addtitle(message):
     emit('预测反馈', {'state': 'success','step':'addtitle','data':data})
     
 
+@socketio.on('全文评级', namespace='/tapi')
+def get_pingji_text(message):
+    text=message.get('text')
+    model = classify(model_name_or_path='./tkitfiles/hot-check', num_labels=2, device='cuda')
+    # model
+    model.pre(text)
+    rank=model.softmax()[1]*100
+    emit('Ai评级', {'state': 'success','step':'pingji_text','rank':rank})
+    model.__del__()
+
+
+@socketio.on('下一句预测', namespace='/tapi')
+def get_next_text(message):
+    keyword = message.get('keywords')
+
+    text_a=message.get('start')
+
+    i=0
+    text=''
+    for  item in search_content(keyword):
+        print(item)
+        # l,s=get_sumy(item.content)
+        # # print(l)
+        # data={"title":item.title,'content':item.content}
+        text=text+item.title+"\n"
+        text=text+item.content+"\n"
+     
+
+    ns=NextSent()
+    ns.load()    
+    li=ns.auto_pre_one(text_a,text)
+    for it in li[:20]:
+        emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
+@socketio.on('停止草稿', namespace='/tapi')
+def get_autonext_stop_text(message):
+    set_var("autonext","True")
+
+
+@socketio.on('自动草稿', namespace='/tapi')
+def get_autonext_text(message):
+    keyword = message.get('keywords')
+
+    text_a=message.get('start')
+    set_var("autonext","False")
+    i=0
+    text=''
+
+    for  item in search_content(keyword):
+        # print(item)
+        # l,s=get_sumy(item.content)
+        # # print(l)
+        # data={"title":item.title,'content':item.content}
+        # text=text+item.title+"\n"
+        text=text+item.content+"\n"
+     
+
+    ns=NextSent()
+    ns.load()    
+    head="开始草稿 by Ai +\n\n"
+    end="\n\n## 草稿By Ai end"
+    working="\n  Ai构建草稿中。。。"
+    for li in ns.auto_pre(text_a,text):
+    # li=ns.auto_pre(text_a,text)
+        li =head +li
+        if get_var("autonext")['value']=="False":
+            emit('Ai草稿', {'state': 'success','step':'ai_sort','data':li+working})
+        else:
+            break
+            # ns.__del__()
+    li=li+end
+    emit('Ai草稿', {'state': 'success','step':'ai_sort','data':li})
+    ns.__del__()
+    # for it in li[:20]:
+    #     emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
+@socketio.on('全文排序', namespace='/tapi')
+def get_paixu_text(message):
+    title = message.get('title')
+
+    text=message.get('text')
+    ns=NextSent()
+    ns.load()    
+    # li=ns.auto_sort(title,text,0.55)
+    # print("li",li)
+    for li in ns.auto_sort(title,text,0.55): 
+
+        emit('Ai排序', {'state': 'success','step':'ai_sort','data':li})
+    ns.__del__()
+
+
+
+
+
+
+
+
+
 @socketio.on('获取摘要', namespace='/tapi')
 def get_sumy_text(message):
     keyword = message.get('data')
  
     print(("keyword",keyword))
+
+    i=0
+    for  item in search_sent(keyword):
+        # print(item)
+        l,s=get_sumy(item.content)
+        # print(l)
+        data={'content':item.content}
+        # data['sumy']=l
+        # data['content_list']=s
+        emit('搜索句子', {'state': 'success','step':'search_sent','data':data})
+        if i==50:
+            break
+        i=i+1
+    pass
+
+    # 执行聚类操作
+    model,tokenizer=load_albert("tkitfiles/albert_tiny")
+    klist=run_search_content(keyword,tokenizer,model,20)
+    for k in klist.keys(): 
+        l,s=get_sumy("。".join(klist[k]))
+        emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})
+
+    i=0
+    for  item in search_content(keyword):
+        # print(item)
+        l,s=get_sumy(item.content)
+        # print(l)
+        data={"title":item.title,'content':item.content}
+        data['sumy']=l
+        data['content_list']=s
+        emit('预测摘要', {'state': 'success','step':'sumy','data':data})
+
+
+        
+        if i==50:
+            break
+        i=i+1
+    pass
+
     response = requests.post(
         'http://localhost:6800/schedule.json',
         params={'keyword': keyword,'project':'default','spider':'kgbot',"url_type":'all'},
@@ -843,36 +1045,27 @@ def get_sumy_text(message):
     if response.status_code ==200:
         print("提交进程",response.json())
 
-    response = requests.get(
-        'http://0.0.0.0:6801/json/search_sent',
-        params={'keyword': keyword,'limit':50},
-    )
-    if response.status_code ==200:
-        items=response.json()
-        for  item in items:
-            print(item)
+    # response = requests.get(
+    #     'http://0.0.0.0:6801/json/search_sent',
+    #     params={'keyword': keyword,'limit':50},
+    # )
+    # if response.status_code ==200:
+    #     items=response.json()
+    #     for  item in items:
+    #         print(item)
 
-            # print(l)
-            data=item
-            # data['sumy']=l
-            # data['content_list']=s
-            emit('搜索句子', {'state': 'success','step':'search_sent','data':data})
+    #         # print(l)
+    #         data=item
+    #         # data['sumy']=l
+    #         # data['content_list']=s
+    #         emit('搜索句子', {'state': 'success','step':'search_sent','data':data})
     # 请求进程结果
-    response = requests.get(
-        'http://0.0.0.0:6801/json/search',
-        params={'keyword': keyword,'limit':50},
-    )
-    if response.status_code ==200:
-        items=response.json()
-        for  item in items:
-            print(item)
-            l,s=get_sumy(item['content'])
-            # print(l)
-            data=item
-            data['sumy']=l
-            data['content_list']=s
-            emit('预测摘要', {'state': 'success','step':'sumy','data':data})
-        pass
+    # response = requests.get(
+    #     'http://0.0.0.0:6801/json/search',
+    #     params={'keyword': keyword,'limit':50},
+    # )
+    # if response.status_code ==200:
+    #     items=response.json()
 
 
 # @app.route("/json/search",methods=['GET'])
@@ -1029,17 +1222,29 @@ def json_search(message):
 
         #请求搜索结果
         if len(items)==0:
-            response = requests.get(
-                'http://0.0.0.0:6801/json/search',
-                params={'keyword': keyword,'limit':10},
-            )
-            print("获取数据",response.status_code,{'keyword': keyword,'limit':5},)
-            if response.status_code ==200:
-                # print
-                items=response.json()
+            # response = requests.get(
+            #     'http://0.0.0.0:6801/json/search',
+            #     params={'keyword': keyword,'limit':10},
+            # )
+            # print("获取数据",response.status_code,{'keyword': keyword,'limit':5},)
+            # if response.status_code ==200:
+            #     # print
+            #     items=response.json()
         
         # print("获取数据items",items)
+            i=30
+            for  item in search_content(keyword):
+                # print(item)
+      
 
+
+                # l,s=get_sumy(item.content)
+                # print(l)
+                data={"title":item.title,'content':item.content,'path':item.path}
+                items.append(data)
+                if i==30:
+                    break
+                i=i+1
         # titles=[]
         print("获取数据数目:",len(items))
         emit('预测反馈', {'state': 'success','step':'log','data':"获取数据数目: "+str(len(items))}) 

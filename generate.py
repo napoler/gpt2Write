@@ -212,11 +212,11 @@ from tokenizations import tokenization_bert
 class Ai:
     def __init__(self):
         pass
-    def load_model(self):
+    def load_model(self,path='model/mini/'):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         device = "cpu"
-        tokenizer = tokenization_bert.BertTokenizer(vocab_file='model/mini/vocab.txt')
-        model = GPT2LMHeadModel.from_pretrained('model/mini/')
+        tokenizer = tokenization_bert.BertTokenizer(vocab_file=path+'vocab.txt')
+        model = GPT2LMHeadModel.from_pretrained(path)
         model.to(device)
         model.eval()
         return model, tokenizer

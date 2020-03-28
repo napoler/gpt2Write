@@ -24,12 +24,19 @@
       padding: 5px;
       font-size: 1.1em;
       color: #333;
-      overflow-y: auto;
+      /* overflow-y: auto; */
 
-      height: 698px;
+      min-height: 100px;
       width: 100%;
     }
+    .sumy {
+    padding: 20px;
+}
 
+.plist {
+    overflow-y: scroll;
+    height: 400px;
+}
     div#plist li {
       list-style: decimal-leading-zero;
       padding: 2px 10px;
@@ -129,6 +136,12 @@
     .it.c{
       background-color: #ddd;
     }
+
+    .sent {
+    background: #f6f6f6;
+    margin: 2px;
+    padding: 5px 10px;
+}
   </style>
 </head>
 
@@ -151,8 +164,22 @@
             <button id="getkeyseq" type="button" class="btn btn-default"> 转换成关键语句</button>
           </div>
           <!-- 预测提示 -->
-          <div id="plist">
+          <div id="rank-box">
+              当前评级：<span id="rank">Null</span>(100)
+            <button id ="getpingji">获取评级</button>
+            <button id ="getpaixu">Ai排序</button>
+            <button id ="getcaogao">Ai草稿</button>
+            <button id ="getcaogao_stop">Ai草稿停止</button>
+            
+            <div id='getpingji_text'></div>
+          </div>
+          <h2>续写</h2>
+          <div id="plist" class="plist">
 
+          </div>
+<h2>下一句</h2>
+          <div id="plist_next" class="plist plist_next">
+<ol></ol>
           </div>
           <!-- 预测提示end -->
 
@@ -161,21 +188,35 @@
         </div>
 
         <div class="col-md-5 col-xl-6 main-content">
+          <input id="title" type="text" class="form-control" id="inlineFormInputName" placeholder="标题" >
           <div id="test-editormd">
             <textarea style="display:none;"></textarea>
           </div>
           <p class='tips'>按下Tab键获取人工智能建议</p>
           <input id="serachkeywords_input" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
           <button id='serachkeywords' type="submit" class="btn btn-primary">搜索</button>
-      
-          <div id="serach-rs">
+
+
+
+
+
+
+
+          <div class="accordion plist1" id="serach-julei">
+   
+          </div>
+
+          
+          <!-- <div id="serach-julei"  class="plist1">
+          </div> -->
+          <div id="serach-rs"  class="plist1">
           </div>
         </div>
 
 
         <div class="col-md-3 col-xl-3 r-sidebar">
           <h2>句子</h2>
-          <div id="serach-sent">
+          <div id="serach-sent" class="plist">
             <ol></ol>
           </div>
           <h2>知识拓展</h2>
@@ -221,7 +262,7 @@
 
       TEditormd = editormd("test-editormd", {
         width: "100%",
-        height: 740,
+        height: 600,
         watch: false,
         syncScrolling: "single",
         path: "/static/editor.md/lib/",
@@ -231,7 +272,12 @@
         onload: function () {
           var keyMap = {
             "Ctrl-S": function (cm) {
-              alert("Ctrl+S");
+              // alert("Ctrl+S");
+              var text = cm.getValue()
+     
+                window.localStorage.setItem("text", text)
+                var title=$("#title").val()
+                window.localStorage.setItem("title", title)
             },
             "Tab": function (cm) {
               // alert("tabsssss");
@@ -255,8 +301,21 @@
           this.addKeyMap(keyMap);
           this.addKeyMap(keyMap2);
           this.removeKeyMap(keyMap2);  // remove signle key
+          var text =window.localStorage.getItem("text")
+
+          var title=window.localStorage.getItem("title", title)
+        $("#title").val(title)
+          // 插入
+          this.insertValue( text);
+
+          
         },
         onchange: function () {
+          // text = TEditormd.getSelection()
+        //   console.log("自动保存")
+        //  console.log( this.getValue())
+          // var text = cm.getValue()
+          // window.localStorage.setItem("text", text)
           // $("#output").html("onchange : this.id =>" + this.id + ", markdown =>" + this.getValue());
           // console.log("onchange =>", this, this.id, this.settings, this.state);
           // // 在输入后自动执行预测
@@ -322,7 +381,7 @@
       //   //   alert( "Handler for .click() called." );
       //   $("#plist").hide();
       // });
-
+ 
       function autotab() {
         // var data = window.localStorage.setItem('autotab_task',Date.now())
         var tab_task = window.sessionStorage.setItem('tab_task', true)
@@ -375,6 +434,7 @@
         text = TEditormd.getSelection()
 
         getplist(text)
+        // socket.emit('下一句预测',{start:text.slice(-20),keywords:text.slice(-20)});
         TEditormd.focus();
 
         // TEditormd.setCursor({line:1, ch:2});
@@ -385,13 +445,26 @@
       }
 
       function getplist(text) {
-         //sdsa
-        socket.emit('获取摘要',{data: text.slice(-20)});
+        $('#plist_next ol').html('')
+        socket.emit('下一句预测',{start:text,keywords:text.slice(-50)});
+        socket.emit('全文评级',{text:text});
+        socket.emit('获取摘要',{data: text.slice(-50)});
+
+        $("#serach-rs").html("")
+      $('#serach-sent ol').html('')
+      $('#plist_next ol').html('')
+      $('#serach-julei').html('')
+
+
+
+
         //    var text = '测试狗子'
         var plen = $("#plen").val();
         var n = $("#n").val();
+        
         window.localStorage.setItem("text", text)
-
+        var title=$("#title").val()
+       window.localStorage.setItem("title", title)
 
         $.post("/json/predict", {
           'text': text + "", 'plen': plen, 'n': n
@@ -665,24 +738,72 @@
       socket.on('预测摘要', function(msg) {
         console.log(msg)
         
-        html = '<div class="row"><h4 class="it">' + msg.data.title + '</h4>'
-        html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        html = '<div class="row"><h4  data-text="'+msg.data.title+'"  class="sent">' + msg.data.title + '</h4><div class="sumy">'
+
         // html = ''
         $.each(msg.data.sumy, function (index, value) {
           // content_list
-          html = html + '<p class="it"> ' + value + '</p>'
+          html = html + '<p data-text="'+value+'"  class="sent"> ' + value + '</p>'
           // if ( msg.data.sumy.indexOf(value) !=-1) {
           // html = html + '<p class="it"> ' + value + '</p>'
           // }else{
           //   html = html + '<p class="it c"> ' + value + '</p>'
           // }
         })
-
+        
+        html=html +'</div><div class="highlights">'+ msg.data.content+ '</div>'
         html=html + '</div>'
         $('#serach-rs').append(html)
         // $('#serach-rs').prepend(html)
       })
 
+
+
+
+
+      socket.on('句子聚类', function(msg) {
+        console.log('句子聚类',msg)
+        
+
+        // <div class="card">
+        //       <div class="card-header" id="headingThree">
+        //         <h2 class="mb-0">
+              //     <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+              //       Collapsible Group Item #3
+              //     </button>
+              //   </h2>
+              // </div>
+        //       <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
+        //         <div class="card-body">
+        //           Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+        //         </div>
+        //       </div>
+        //     </div>
+
+
+
+
+
+
+
+        html = '<div class="card">'
+        html=html+'<div class="card-header" id="heading'+msg.key+'"> <h2 class="mb-0"><button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse'+msg.key+'" aria-expanded="false" aria-controls="collapse'+msg.key+'">  ('+msg.data.length+' )'+msg.sumy[0]+'  </button> </h2> </div>'
+        html =html+ ' <div id="collapse'+msg.key+'" class="collapse" aria-labelledby="heading'+msg.key+'" data-parent="#serach-julei"><div class="card-body">'
+        $.each(msg.data, function (index, value) {
+          // content_list
+          html = html + '<p data-text="'+value+'"  class="sent"> ' + value + '</p>'
+          // if ( msg.data.sumy.indexOf(value) !=-1) {
+          // html = html + '<p class="it"> ' + value + '</p>'
+          // }else{
+          //   html = html + '<p class="it c"> ' + value + '</p>'
+          // }
+        })
+        
+        // html=html +'</div><div class="highlights">'+ msg.data.content+ '</div>'
+        html=html + '</div></div></div>'
+        $('#serach-julei').append(html)
+        // // $('#serach-rs').prepend(html)
+      })
 
 
       socket.on('搜索句子', function(msg) {
@@ -692,7 +813,7 @@
           // <h4 class="it">' + msg.data.title + '</h4>
         // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
         // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
-        html=html +'<li data-text="'+msg.data.content+'" class="sent">'+ msg.data.highlights+ '</li>'
+        html=html +'<li data-text="'+msg.data.content+'" class="sent it">'+ msg.data.content+ '</li>'
         // content
 
         // html=html + '</li>'
@@ -700,21 +821,79 @@
         // $('#serach-rs').prepend(html)
       })
 
+      socket.on('Ai下一句', function(msg) {
+        console.log(msg)
+        // html = '<li class="row">'
+        html=''
+          // <h4 class="it">' + msg.data.title + '</h4>
+        // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
+        html=html +'<li data-text="'+msg.data[0]+'" class="sent it">评分：' +msg.data[1]+'    '+ msg.data[0]+ '</li>'
+        // content
+
+        // html=html + '</li>'
+        $('#plist_next ol').prepend(html)
+        // $('#serach-rs').prepend(html)
+      })
 
 
 
+      socket.on('Ai评级', function(msg) {
+        console.log(msg)
+        // html = '<li class="row">'
+        // html=''
+          // <h4 class="it">' + msg.data.title + '</h4>
+        // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
+        html=msg.rank
+        // content
 
+        // html=html + '</li>'
+        $('#rank').html(html)
+        // $('#serach-rs').prepend(html)
+      })
 
+ 
+      socket.on('Ai排序', function(msg) {
+        console.log(msg)
+        // html = '<li class="row">'
+        // html=''
+          // <h4 class="it">' + msg.data.title + '</h4>
+        // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
+        html=msg.data
+        // content
+
+        // html=html + '</li>'
+        $('#getpingji_text').html(html)
+        // $('#serach-rs').prepend(html)
+      })     
+
+ 
+      socket.on('Ai草稿', function(msg) {
+        console.log(msg)
+        // html = '<li class="row">'
+        // html=''
+          // <h4 class="it">' + msg.data.title + '</h4>
+        // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
+        // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
+        html=msg.data
+        // content
+        TEditormd.setValue(msg.data)
+        // html=html + '</li>'
+        // $('#getpingji_text').html(html)
+        // $('#serach-rs').prepend(html)
+      })     
 
     })
-    $(document).on('click', '#serach-sent .sent', function () {
+    $(document).on('click', '.sent', function () {
 
 
 var text = $(this).data('text');
-
-var or = TEditormd.getSelection()
+// var text = $(this).text();
+// var or = TEditormd.getSelection()
 // 插入
-TEditormd.insertValue(or + "" + text);
+TEditormd.insertValue(  text);
 // 替换选中
 // TEditormd.replaceSelection(text+"");
 // TEditormd.focus();
@@ -740,15 +919,74 @@ TEditormd.insertValue(or + "" + text);
 // 搜索关键词
     $(document).on('click', '#serachkeywords', function () {
       console.log("获取摘要")
+      // var text = TEditormd.getMarkdown()
+      var getCursor = TEditormd.getCursor()
+        // plist()
+
+        // console.log("坐标",getSelectionCoords())
+        // console.log("获取当前位置getCursor =>", getCursor);
+        // console.log("获取当前位置getCursor =>", getCursor.ch);
+        // console.log("获取当前位置getCursor =>", getCursor.line);
+        var now_ch = getCursor.ch;
+        var now_line = getCursor.line;
+        TEditormd.setSelection({ line: now_line - 10, ch: 10 }, { line: now_line, ch: now_ch });
+      var text = TEditormd.getSelection()
+      socket.emit('下一句预测',{start:text,keywords:$("#serachkeywords_input").val()});
+
+
       socket.emit('获取摘要',{data:$("#serachkeywords_input").val()});
       $("#serach-rs").html("")
       $('#serach-sent ol').html('')
+      $('#plist_next ol').html('')
+      $('#serach-julei').html('')
 
     })
 
+// 获取全文评级
+$(document).on('click', '#getpingji', function () {
 
+      console.log("获取评级")
+      // var text = TEditormd.getMarkdown()
+      // var text = TEditormd.getMarkdown()
 
+      var getCursor = TEditormd.getCursor()
+        // plist()
 
+        // console.log("坐标",getSelectionCoords())
+        // console.log("获取当前位置getCursor =>", getCursor);
+        // console.log("获取当前位置getCursor =>", getCursor.ch);
+        // console.log("获取当前位置getCursor =>", getCursor.line);
+        var now_ch = getCursor.ch;
+        var now_line = getCursor.line;
+        // TEditormd.setSelection({ line: now_line - 10, ch: 10 }, { line: now_line, ch: now_ch });
+        var text = TEditormd.getSelection()
+        socket.emit('全文评级',{text:text.slice(-500)});
+        $('#getpingji_text').html(text.slice(-500))
+    })
+    
+// 获取排序
+$(document).on('click', '#getpaixu', function () {
+console.log("排序内容")
+var title = $("#title").val()
+var text = TEditormd.getMarkdown()
+socket.emit('全文排序',{title:title,text:text});
+})
+        
+// 获取排序
+$(document).on('click', '#getcaogao', function () {
+console.log("Ai草稿")
+var title = $("#title").val()
+var keywords = $("#serachkeywords_input").val()
+socket.emit('自动草稿',{start:title,keywords:keywords});
+})
+    
+// 获取排序
+$(document).on('click', '#getcaogao_stop', function () {
+console.log("Ai停止草稿")
+
+socket.emit('停止草稿',{});
+})
+    
     $(document).on('click', '#getkeywords', function () {
 
 
@@ -798,10 +1036,11 @@ TEditormd.insertValue(or + "" + text);
     })
 
 
-    $(document).on('click', '#plist li.it', function () {
+    $(document).on('click', '#plist .it', function () {
 
 
       var id = $(this).data('text');
+
       var data = JSON.parse(window.localStorage.getItem('plist'))
       // console.log('data',data)
       var text = data.items[id]
@@ -817,7 +1056,7 @@ TEditormd.insertValue(or + "" + text);
       // TEditormd.focus();
 
     })
-
+ 
 
 
     $(document).on('click', '.settings', function () {
@@ -831,11 +1070,16 @@ TEditormd.insertValue(or + "" + text);
       $('#settings-box').modal('hide')
     })
 
-
+    function auto_save(){
+      console.log("自动保存")
+          var text = TEditormd.getValue()
+          window.localStorage.setItem("text", text)
+    }
     var x = 0;//水平方向位移
     var y = 0;//垂直方向位移
     $(document).keydown(function (event) {
 
+    
       switch (event.keyCode) {
         case 38:
           console.log("up")
@@ -848,6 +1092,7 @@ TEditormd.insertValue(or + "" + text);
           break;
         case 13:
           console.log("回车")
+          auto_save()
           // var id=  $(".it.active").data('text')
 
           // var data = JSON.parse(window.localStorage.getItem('plist'))
@@ -864,7 +1109,9 @@ TEditormd.insertValue(or + "" + text);
           // $(".it.active").removeClass("active")
           break;
         default:
-          console.log("")
+          auto_save()
+          // console.log("")
+
       }
 
 
