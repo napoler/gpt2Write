@@ -1,0 +1,3 @@
+python3 eval_simple_lm_finetuning.py --num_train_epochs 3 --train_batch_size 1 --train_corpus data/train_db_next_sent.txt --bert_model tkitfiles/bertNext/  --do_lower_case --output_dir finetuned_lm/ --do_train
+
+python3 eval_simple_lm_finetuning.py --no_cuda --train_batch_size 1 --train_corpus data/train_db_next_sent.txt --bert_model tkitfiles/bertNext/  --do_lower_case --output_dir finetuned_lm/ --do_train

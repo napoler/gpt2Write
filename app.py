@@ -16,7 +16,7 @@ import tkitMarker,tkitDb,tkitText
 import os
 from fun import *
 from libs import *
-
+import tkitNextSents
 
 from sumy.parsers.html import HtmlParser
 from sumy.parsers.plaintext import PlaintextParser
@@ -906,11 +906,17 @@ def get_pingji_text(message):
 
 @socketio.on('下一句预测', namespace='/tapi')
 def get_next_text(message):
-    keyword = message.get('keywords')
-
     text_a=message.get('start')
+    keyword = message.get('keywords')
+    # print("keyword",keyword)
+    if len(keyword)>0:
+        pass
+    else:
+        keyword=text_a[-100:]
 
-    i=0
+    print("kw",keyword)
+
+    # i=0
     text=''
     for  item in search_content(keyword):
         print(item)
@@ -921,10 +927,22 @@ def get_next_text(message):
         text=text+item.content+"\n"
      
 
-    ns=NextSent()
-    ns.load()    
-    li=ns.auto_pre_one(text_a,text)
-    for it in li[:20]:
+    # ns=NextSent()
+    # ns.load()    
+    # li=ns.auto_pre_one(text_a,text)
+    # for it in li[:20]:
+    #     emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
+    ns=tkitNextSents.NextSents("tkitfiles/bertNext/")
+    ns.load_model()
+    # pone=ns.pre_one(text_a,text_b)
+    # print("预测单条结果",pone)
+    tt=tkitText.Text()
+    sents=tt.sentence_segmentation_v1(text_a)
+    # print("sents",sents[-1])
+    # exit()
+    #从文本中计算符合下一句的句子
+    p=ns.pre_from_text(sents[-1],text)
+    for it in p[:20]:
         emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
 @socketio.on('停止草稿', namespace='/tapi')
 def get_autonext_stop_text(message):
@@ -940,59 +958,90 @@ def get_autonext_text(message):
     i=0
     text=''
 
-    for  item in search_content(keyword):
-        # print(item)
-        # l,s=get_sumy(item.content)
-        # # print(l)
-        # data={"title":item.title,'content':item.content}
-        # text=text+item.title+"\n"
-        text=text+item.content+"\n"
+    # for  item in search_content(keyword):
+    #     # print(item)
+    #     # l,s=get_sumy(item.content)
+    #     # # print(l)
+    #     # data={"title":item.title,'content':item.content}
+    #     # text=text+item.title+"\n"
+    #     text=text+item.content+"\n"
      
+    ns=tkitNextSents.NextSents("tkitfiles/bertNext/")
+    ns.load_model()
+    # pone=ns.pre_one(text_a,text_b)
+    # print("预测单条结果",pone)
+    tt=tkitText.Text()
+    
+    # ns=NextSent()
+    # ns.load()    
+    head="开始草稿 by Ai +\n\n"+"=="*10+"\n\n"
 
-    ns=NextSent()
-    ns.load()    
-    head="开始草稿 by Ai +\n\n"
     end="\n\n## 草稿By Ai end"
-    working="\n  Ai构建草稿中。。。"
-    for li in ns.auto_pre(text_a,text):
-    # li=ns.auto_pre(text_a,text)
-        li =head +li
-        if get_var("autonext")['value']=="False":
-            emit('Ai草稿', {'state': 'success','step':'ai_sort','data':li+working})
+    working="\n\n"+"=="*10+"\n  Ai构建草稿中。。。"
+    emit('Ai草稿', {'state': 'success','step':'ai_sort','data':head+text_a+working})
+    li=''
+    for i in range(0,500):
+        print("预测次数",i)
+        for  item in search_content(text_a[-100:]):
+            text=text+item.content+"\n"
+        sents=tt.sentence_segmentation_v1(text_a)
+        p=ns.pre_from_text(sents[-1],text)
+        # print("预测结果",p)
+        emit('Ai下一句', {'state': 'success','step':'next_sent','data':p})
+        if len(p)>0 and p[0][0]>0.5:
+            # pass
+            text_a=text_a+"\n"+p[0][1]
+
         else:
             break
-            # ns.__del__()
-    li=li+end
+            pass
+        if get_var("autonext")['value']=="False":
+            emit('Ai草稿', {'state': 'success','step':'ai_sort','data':head+text_a+working})
+        else:
+            break
+    # for li in ns.auto_pre(text_a,text):
+    # # li=ns.auto_pre(text_a,text)
+    #     li =head +li
+    #     if get_var("autonext")['value']=="False":
+    #         emit('Ai草稿', {'state': 'success','step':'ai_sort','data':li+working})
+    #     else:
+    #         break
+    #         # ns.__del__()
+    li=text_a+end
     emit('Ai草稿', {'state': 'success','step':'ai_sort','data':li})
-    ns.__del__()
+    # ns.__del__()
     # for it in li[:20]:
     #     emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
 @socketio.on('全文排序', namespace='/tapi')
 def get_paixu_text(message):
-    title = message.get('title')
+    title = message.get('title')+"。"
 
     text=message.get('text')
     ns=NextSent()
     ns.load()    
     # li=ns.auto_sort(title,text,0.55)
     # print("li",li)
-    for li in ns.auto_sort(title,text,0.55): 
-
+    # for li in ns.auto_pre(title,text,0.55): 
+        # print(li)
+    
+    for li in ns.auto_pre(title,text):
         emit('Ai排序', {'state': 'success','step':'ai_sort','data':li})
-    ns.__del__()
+    # ns.__del__()
 
-
-
-
-
-
+@socketio.on('自动分段', namespace='/tapi')
+def get_cut_paragraphs(message):
+    num_paras = message.get('num')
+    text=message.get('text')
+    print("cut_paragraphs",cut_paragraphs(text,int(num_paras)))
+    for li in cut_paragraphs(text,int(num_paras)):
+        emit('自动分段结果', {'state': 'success','step':'ai_sort','data':li})
 
 
 
 @socketio.on('获取摘要', namespace='/tapi')
 def get_sumy_text(message):
     keyword = message.get('data')
- 
+    tt= tkitText.Text()
     print(("keyword",keyword))
 
     i=0
@@ -1011,26 +1060,35 @@ def get_sumy_text(message):
 
     # 执行聚类操作
     model,tokenizer=load_albert("tkitfiles/albert_tiny")
-    klist=run_search_content(keyword,tokenizer,model,20)
-    for k in klist.keys(): 
-        l,s=get_sumy("。".join(klist[k]))
-        emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})
+    # klist=run_search_content(keyword,tokenizer,model,10)
+    # klist=run_search_content_sk(keyword,tokenizer,model,10)
+    # for k in klist.keys(): 
+    #     # l,s=get_sumy("。".join(klist[k]))
+    #     emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})
 
     i=0
+    text_list=[]
     for  item in search_content(keyword):
         # print(item)
         l,s=get_sumy(item.content)
-        # print(l)
+        # print(l,s)
         data={"title":item.title,'content':item.content}
         data['sumy']=l
-        data['content_list']=s
-        emit('预测摘要', {'state': 'success','step':'sumy','data':data})
+        # data['content_list']=tt.sentence_segmentation_v1(item.content)
+        ht0 = HarvestText()
+        num_paras=10
+        data['content_list']=ht0.cut_paragraphs(item.content, num_paras)
+        text_list=text_list+data['content_list']
 
-
-        
+        emit('预测摘要', {'state': 'success','step':'sumy','key':i,'data':data})
         if i==50:
             break
         i=i+1
+
+    klist=kmeans_sk_content(text_list,tokenizer,model,20)
+    for k in klist.keys(): 
+    # l,s=get_sumy("。".join(klist[k]))
+        emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})  
     pass
 
     response = requests.post(

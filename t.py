@@ -1,49 +1,12 @@
-from albert_pytorch import *
-import sys
-import time
-import torch
+from libs import *
+text_a='鬣狗（学名：Hyaenidae）：哺乳动物，中等体型，生活在的陆生肉食性动物。'
+text="""
+它们同属于一科，仅4属4种，可分为2个亚科：鬣狗亚科和土狼亚科。体型似犬，长颈，后肢较前肢短弱，躯体较短，肩高而臀低；颈后的背中线有长鬣毛；牙齿大，具粗壮的锥形前臼齿，裂齿发育，臼齿退化。颌部粗而强，能咬开骨头。鬣狗（条纹鬣狗）体较小，全身布满条纹，多为独居，依靠发达的嗅觉觅食腐肉。棕鬣狗体型较大，分布于非洲西南部海岸，常到海滩寻食螃蟹、鱼等。斑鬣狗仅见于非洲，体型较大，成群猎食，除食腐肉外，能猎捕羚羊。土狼为特化的食蚁动物。
+2015年12月23日从中科院古脊椎动物与古人类研究所了解到，中国西藏阿里地区札达盆地发现了400多万年前的佩里耶上新鬣狗化石。经过多年的化石研究，专家表示，这一发现是大型碎骨型鬣狗在青藏高原上的首次出现，对于研究鬣狗类的起源、多样性和古地理分布具有重要意义。分布于非洲、阿拉伯半岛、亚洲和印度次大陆。
 
-print(torch.cuda.memory_allocated())
-print(torch.cuda.max_memory_allocated())
-
-
-for i in range(10):
-    with torch.no_grad():
-        rankclass = classify(model_name_or_path='tkitfiles/rank', num_labels=3, device='cuda')
-        p = rankclass.pre("柯基犬喜欢吃")
-        print(p)
-    rankclass.release()
-    # del rankclass
-#
-#     # print(torch.cuda.memory_cached())
-# time.sleep(1)
-# model_name_or_path='tkitfiles/rank'
-# P = Plus()
-# P.args['class_name'] = "AlbertForSequenceClassification"
-# P.args['model_name_or_path'] = model_name_or_path
-# P.args['finetuning_task'] = 'finetuning_task'
-# P.args['num_labels'] = 3
-# print(torch.cuda.max_memory_cached())
-# model,tokenizer,config_class=P.load_model()
-# print(torch.cuda.memory_cached())
-# P.release()
-# torch.cuda.empty_cache()
-# print(torch.cuda.memory_cached())
-# time.sleep(100)
-
-# device = torch.device('cuda:0')
-# # with torch.no_grad():
-# # 定义两个tensor
-# dummy_tensor_4 = torch.randn(120, 3, 512, 512).float().to(device)  # 120*3*512*512*4/1000/1000 = 377.48M
-# dummy_tensor_2 = torch.randn(80, 3, 512, 512).float().to(device)  # 80*3*512*512*4/1000/1000 = 251.64M
-# print(torch.cuda.memory_cached())
-# time.sleep(1)
-# # 然后释放
-# dummy_tensor_4 = dummy_tensor_4.cpu()
-# dummy_tensor_2 = dummy_tensor_2.cpu()
-# # 这里虽然将上面的显存释放了，但是我们通过Nvidia-smi命令看到显存依然在占用
-# print(torch.cuda.memory_cached())
-# torch.cuda.empty_cache()
-# # 只有执行完上面这句，显存才会在Nvidia-smi中释放
-# print(torch.cuda.memory_cached())
-time.sleep(100)
+"""
+ns=NextSent()
+ns.load()    
+# print(ns.auto_pre(text_a,text))
+for li in ns.auto_pre(text_a,text):
+    print(li)

@@ -499,6 +499,33 @@ def data_pre_train_mongo_kwseq( data_path='data/data.json',train_path='data/trai
             f1.write("\n")
         except :
             pass
+
+
+def data_pre_train_mongo_next_sent( data_path='data/data.json',train_path='data/train_db_next_sent.txt' ):
+    """
+    下一句语料构建
+    """
+ 
+    tt=tkitText.Text()
+ 
+    f1 = open(train_path,'w')
+    #这里定义mongo数据
+    client = pymongo.MongoClient("localhost", 27017)
+    DB_kg_scrapy = client.kg_scrapy
+
+    q={}
+    i=0
+    # content_pet
+    # for item in DB_kg_scrapy.kg_content.find(q):
+    for item in DB.content_pet.find({}):
+        i=i+1
+        # if i==100:
+        #     break
+        f1.write(item['title']+"\n")
+        sents=tt.sentence_segmentation_v1(item['content'])
+        f1.write("\n".join(sents)+"\n\n")
+
+
 from harvesttext import HarvestText
 
 
@@ -938,6 +965,10 @@ def main():
         #导出为宠物文章为json
         # python bulid_data.py --do data_pre_train_mongo_pet_to_json
         data_pre_train_mongo_pet_to_json()
+    elif  args.do=='data_pre_train_mongo_next_sent':
+        #构建下一句预测语句
+        # python bulid_data.py --do data_pre_train_mongo_next_sent
+        data_pre_train_mongo_next_sent()
 
 if __name__ == '__main__':
     main()

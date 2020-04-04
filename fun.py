@@ -20,12 +20,21 @@ from tqdm import tqdm
 from harvesttext import HarvestText
 import os
 from tkitMarker import *
-
+import tkitText
 
 
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from elasticsearch_dsl import Q
+
+def cut_paragraphs(text,num_paras=5):
+    tt= tkitText.Text()
+    text=tt.sentence_segmentation_v1(text)
+    ht0 = HarvestText()
+    return ht0.cut_paragraphs("\n".join(text), num_paras)
+
+
+
 def search_content(keyword):
     client = Elasticsearch()
     q = Q("multi_match", query=keyword, fields=['title', 'body'])
@@ -279,7 +288,7 @@ def get_sumy(text):
     获取摘要
     """
     LANGUAGE = "chinese"
-    SENTENCES_COUNT = 10
+    SENTENCES_COUNT = 5
     stemmer = Stemmer(LANGUAGE)
     summarizer = Summarizer(stemmer)
     summarizer.stop_words = get_stop_words(LANGUAGE)
