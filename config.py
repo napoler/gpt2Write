@@ -2,7 +2,7 @@ import sqlite3
 import os
 import pymongo
 from albert_pytorch import classify
-
+import tkitText
 from  tkitMarker import  *
 
 #这里定义mongo数据
@@ -117,3 +117,63 @@ def get_var(key):
         return data
 
 
+def add_miaoshu(word,vaule,content):
+    """
+    保存对象
+    vaule为对象
+    """
+    tt= tkitText.Text()
+    c_id=tt.md5(content)
+    try:
+        DB.entity_kg.insert_one({"_id":word+"##"+vaule+"##"+str(c_id),"entity":word,'value':vaule,'md5':c_id}) 
+    except :
+        # del vaule['_id']
+        print("已经存在")
+        # DB.runvar.update_one({'_id':key},   {"$set" :{"_id":key,'value':vaule}}) 
+        return 
+        pass
+    # 保存文档
+    try:
+        DB.entity_kg_content.insert_one({"_id":c_id,'content':content}) 
+    except :
+        print("已经存在")
+        pass
+    rank_data=DB.entity_kg_rank.find_one({"_id":word+"##"+vaule})
+    try:
+        if rank_data!=None:
+            rank=rank_data.get('rank')
+            # DB.entity_kg_rank.insert_one({"_id":word+"##"+vaule,"rank":1,}) 
+            DB.entity_kg_rank.update_one({'_id':word+"##"+vaule},   {"$set" :{"_id":word+"##"+vaule,"entity":word,'value':vaule,'rank':rank+1}}) 
+        else:
+            DB.entity_kg_rank.insert_one({"_id":word+"##"+vaule,"entity":word,'value':vaule,"rank":1,}) 
+
+    except :
+        # del vaule['_id']
+        print("添加内容错误")
+        # DB.runvar.update_one({'_id':key},   {"$set" :{"_id":key,'value':vaule}}) 
+        pass
+
+
+def get_miaoshu(word,limit=100):
+    """
+    保存对象
+    vaule为对象
+    """
+    # tt= tkitText.Text()
+    data=[]
+    for it in DB.entity_kg_rank.find({"entity":word}).sort( [{ 'rank', -1 }] ).limit(limit):
+        # print(it)
+        one=DB.entity_kg.find_one({"entity":word,"value":it['value']})
+        one['rank']=it['rank']
+        data.append(one)
+    # print(data)
+    return data
+
+def get_entity_kg_content(cid):
+    """
+    保存对象
+    vaule为对象
+    """
+    # tt= tkitText.Text()
+    
+    return DB.entity_kg_content.find_one({"_id":cid})

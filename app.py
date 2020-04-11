@@ -1036,6 +1036,14 @@ def get_cut_paragraphs(message):
     for li in cut_paragraphs(text,int(num_paras)):
         emit('自动分段结果', {'state': 'success','step':'ai_sort','data':li})
 
+@socketio.on('获取单篇文章', namespace='/tapi')
+def get_entity_one_content(message):
+    cid = message.get('cid')
+    one=get_entity_kg_content(cid)
+    tt= tkitText.Text()
+    sens=tt.sentence_segmentation_v1(one['content'])
+    one['sents']=sens
+    emit('返回单篇文章', {'state': 'success','step':'search_sent','data':one})
 
 
 @socketio.on('获取摘要', namespace='/tapi')
@@ -1048,7 +1056,7 @@ def get_sumy_text(message):
         ner_input=keyword
     # seq=get_keyseq(data['text'],num=30)
     i=0
-    for  item in search_sent(keyword):
+    for  item in search_sent(keyword+ner_input):
         # print(item)
         # l,s=get_sumy(item.content)
         # print(l)
@@ -1061,6 +1069,8 @@ def get_sumy_text(message):
         i=i+1
     pass
 
+
+    emit('预测描述', {'state': 'success','step':'sumy','key':i,'data':get_miaoshu(ner_input)})
     
     # Marker(model_path="./tkitfiles/miaoshu")
     # Mmodel,Mtokenizer=pred.load_model()
@@ -1069,7 +1079,7 @@ def get_sumy_text(message):
     i=0
     text_list=[]
     pall_list=[]
-    for  item in search_content(keyword):
+    for  item in search_content(keyword+ner_input):
         # print(item)
         l,s=get_sumy(item.content)
         # print(l,s)
@@ -1089,7 +1099,9 @@ def get_sumy_text(message):
         except:
             pall=[]
         # emit('预测描述', {'state': 'success','step':'marker','data':pall})
-
+        # 保存预测到数据
+        for kg in pall:
+            add_miaoshu(ner_input,kg,item.content)
         # ht0 = HarvestText()
         # num_paras=10
         # data['content_list']=ht0.cut_paragraphs(item.content, num_paras)
@@ -1111,20 +1123,26 @@ def get_sumy_text(message):
         if i==50:
             break
         i=i+1
-
-
+    
+    emit('预测描述', {'state': 'success','step':'sumy','key':i,'data':get_miaoshu(ner_input)})
+    
 
     # 执行聚类操作
     model,tokenizer=load_albert("tkitfiles/albert_tiny")
     # klist=run_search_content(keyword,tokenizer,model,10)
     # klist=run_search_content_sk(keyword,tokenizer,model,10)
-    klist=kmeans_sk_content(pall_list,tokenizer,model,5)
+
+    klist=kmeans_sk_content(pall_list,tokenizer,model,int(len(pall_list)*0.10))
     for k in klist.keys(): 
         # l,s=get_sumy("。".join(klist[k]))
         if len(klist[k])>0:
             emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'data':klist[k]})
         else:
             emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'data':[]})
+        
+
+            
+
 
     # klist=kmeans_sk_content(text_list,tokenizer,model,20)
     # for k in klist.keys(): 

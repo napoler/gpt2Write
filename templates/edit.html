@@ -240,21 +240,23 @@ li.sent_add.it {
 }
 
 
-.julei_card {
+.julei_card,.miaoshu_card {
     margin: 10px 0;
     background: #dedbdb;
     padding: 10px;
 }
 
-.julei_card .sent {
+.julei_card .sent,.miaoshu_card .sent {
     display: inline-block;
 }
 
 div#miaoshu-rs {
     background: #dedbdb;
     padding: 10px;
+    max-height: 500px;
+    overflow: auto;
 }
-
+ 
   </style>
 </head>
 
@@ -300,6 +302,10 @@ div#miaoshu-rs {
             <ol></ol>
           </div>
           <!-- 预测提示end -->
+          <h2>搜索描述</h2>
+          <div class="accordion plist1" id="serach-miaoshu">
+
+          </div>
 
 
 
@@ -347,6 +353,7 @@ div#miaoshu-rs {
           <div class="accordion plist1" id="serach-julei">
 
           </div>
+
 
 
           <h2>知识拓展</h2>
@@ -918,6 +925,15 @@ div#miaoshu-rs {
 
     });
 
+    // 匹配颜色高亮
+    function keywordscolorful(str, key){
+      console.log("替换")
+        var reg = new RegExp("(" + key + ")", "g");
+        // var newstr = str.replace(reg, "<font style='background:#ff0;'>$1</font>");
+        var newstr = str.replace(reg, "<span class='m_result' style='background:yellow;color:red;''>" + key + "</span>");
+        
+        return newstr;
+    }
 
 
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/tapi');
@@ -1008,6 +1024,70 @@ div#miaoshu-rs {
 
 
 
+
+
+      
+
+
+
+      socket.on('返回单篇文章', function (msg) {
+        console.log('返回单篇文章', msg)
+  // var miaoshu_id="#miaoshu_"+text
+
+      // $('#pop-box .modal-body').html(msg.data.content)
+      
+      $('#pop-box').modal('show')
+      // var searchText=   $('.' + msg.data.md5 ).data('text')
+      var searchText= window.localStorage.getItem('one_content')
+      // window.localStorage.setItem('one_content', JSON.stringify(data))
+
+
+
+      // var html =msg.data.content
+      // var h2 =$("#"+content_id+" .collapse h4").html()
+      $('#pop-box .modal-header h2').html(searchText)
+      html=''
+   $.each(msg.data.sents, function (index, value) {
+          // content_list
+          html = html + '<p id="yucemiaoshu_'+  value +'" data-text="' + value + '" class="sent plus_menu '+  value +'">' + value + '</p>'
+ 
+        })
+      // $('#pop-box .modal-body').html(html)
+      console.log("searchText",searchText)
+      var newHtml = keywordscolorful(html, searchText)
+      console.log("newHtml",newHtml)
+      $('#pop-box .modal-body').html(newHtml)
+
+
+
+ 
+      })
+
+
+
+
+
+      socket.on('预测描述', function (msg) {
+        console.log('预测描述', msg)
+  
+        html = '<div class="miaoshu_card">'
+        // html = html + '<div class="card-header" id="heading' + msg.key + '"> <h2 class="mb-0"><button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse' + msg.key + '" aria-expanded="false" aria-controls="collapse' + msg.key + '">  (' + msg.data.length + ' )' + msg.sumy[0] + '  </button> </h2> </div>'
+        // html = html + ' <div id="collapse' + msg.key + '" class="collapse" aria-labelledby="heading' + msg.key + '" data-parent="#serach-julei"><div class="card-body">'
+        $.each(msg.data, function (index, value) {
+          // content_list
+          html = html + '<p id="yucemiaoshu_'+  value.value +'" data-text="' + value.value + '"  data-md5="' + value.md5 + '"  class="sent plus_menu '+  value.value +' ' + value.md5 + '">'+value.rank+': ' + value.value + '</p>'
+          // if ( msg.data.sumy.indexOf(value) !=-1) {
+          // html = html + '<p class="it"> ' + value + '</p>'
+          // }else{
+          //   html = html + '<p class="it c"> ' + value + '</p>'
+          // }
+        })
+
+        // html=html +'</div><div class="highlights">'+ msg.data.content+ '</div>'
+        html = html + '</div>'
+        $('#serach-miaoshu').html(html)
+        // // $('#serach-rs').prepend(html)
+      })
 
 
       socket.on('句子聚类', function (msg) {
@@ -1130,15 +1210,6 @@ div#miaoshu-rs {
 
     })
 
-    // 匹配颜色高亮
-    function keywordscolorful(str, key){
-      console.log("替换")
-        var reg = new RegExp("(" + key + ")", "g");
-        // var newstr = str.replace(reg, "<font style='background:#ff0;'>$1</font>");
-        var newstr = str.replace(reg, "<span class='m_result' style='background:yellow;color:red;''>" + key + "</span>");
-        
-        return newstr;
-    }
 
     $(document).on('click', '.sent_pop', function () {
       $(this).addClass("clicked")
@@ -1203,6 +1274,31 @@ $('#pop-box .modal-body').html("空白内容")
 
 
 })
+
+
+
+
+$(document).on('click', '#serach-miaoshu .sent', function () {
+
+
+var md5 = $(this).data('md5');
+var text = $(this).data('text');
+window.localStorage.setItem('one_content', text)
+    socket.emit('获取单篇文章', { cid: md5});
+
+  $(this).addClass("used")
+
+
+
+
+
+
+})
+
+
+
+
+
 
 
 
@@ -1523,7 +1619,7 @@ $('#pop-box .modal-body').html("空白内容")
                   $("#miaoshu-rs").prepend('</br></br>')
                     var ner_input=$("#ner_input").val()
                     socket.emit('获取摘要', { data: text,ner_input:ner_input });
-                   $("#ner_input").val(text)
+                   $("#serachkeywords_input").val(text)
                     
 
                     // code block
