@@ -1061,13 +1061,6 @@ def get_sumy_text(message):
         i=i+1
     pass
 
-    # 执行聚类操作
-    # model,tokenizer=load_albert("tkitfiles/albert_tiny")
-    # klist=run_search_content(keyword,tokenizer,model,10)
-    # klist=run_search_content_sk(keyword,tokenizer,model,10)
-    # for k in klist.keys(): 
-    #     # l,s=get_sumy("。".join(klist[k]))
-    #     emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})
     
     # Marker(model_path="./tkitfiles/miaoshu")
     # Mmodel,Mtokenizer=pred.load_model()
@@ -1075,6 +1068,7 @@ def get_sumy_text(message):
 
     i=0
     text_list=[]
+    pall_list=[]
     for  item in search_content(keyword):
         # print(item)
         l,s=get_sumy(item.content)
@@ -1104,6 +1098,7 @@ def get_sumy_text(message):
         data['seq']=[]
 
         data['description']=pall
+        pall_list=pall_list+pall
         del pall
         # try:
         #     # seq=get_keyseq(item.title+'\n'+item.content,int(len(sens)*0.30))
@@ -1116,6 +1111,20 @@ def get_sumy_text(message):
         if i==50:
             break
         i=i+1
+
+
+
+    # 执行聚类操作
+    model,tokenizer=load_albert("tkitfiles/albert_tiny")
+    # klist=run_search_content(keyword,tokenizer,model,10)
+    # klist=run_search_content_sk(keyword,tokenizer,model,10)
+    klist=kmeans_sk_content(pall_list,tokenizer,model,5)
+    for k in klist.keys(): 
+        # l,s=get_sumy("。".join(klist[k]))
+        if len(klist[k])>0:
+            emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'data':klist[k]})
+        else:
+            emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'data':[]})
 
     # klist=kmeans_sk_content(text_list,tokenizer,model,20)
     # for k in klist.keys(): 

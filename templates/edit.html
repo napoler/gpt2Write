@@ -233,6 +233,27 @@ p.sent_pop {
 p.sent_pop.clicked {
     background: #ffc107;
 }
+li.sent_add.it {
+    background: #eaeaea;
+    margin: 2px;
+    padding: 2px;
+}
+
+
+.julei_card {
+    margin: 10px 0;
+    background: #dedbdb;
+    padding: 10px;
+}
+
+.julei_card .sent {
+    display: inline-block;
+}
+
+div#miaoshu-rs {
+    background: #dedbdb;
+    padding: 10px;
+}
 
   </style>
 </head>
@@ -934,7 +955,7 @@ p.sent_pop.clicked {
         var miaoshu  = ''
         $.each(msg.data.description, function (index, value) {
           // content_list
-          miaoshu = miaoshu + '<p data-text="' + value + '"  data-id="content_'+timestamp+'" class="sent_pop plus_menu"> ' + value + '</p>'
+          miaoshu = miaoshu + '<p id="miaoshu_'+  value +'" data-text="' + value + '"  data-id="content_'+timestamp+'" class="sent_pop plus_menu '+  value +'"> ' + value + '</p>'
 
         })
         var ner_input=$("#ner_input").val()
@@ -992,12 +1013,12 @@ p.sent_pop.clicked {
       socket.on('句子聚类', function (msg) {
         console.log('句子聚类', msg)
   
-        html = '<div class="card">'
-        html = html + '<div class="card-header" id="heading' + msg.key + '"> <h2 class="mb-0"><button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse' + msg.key + '" aria-expanded="false" aria-controls="collapse' + msg.key + '">  (' + msg.data.length + ' )' + msg.sumy[0] + '  </button> </h2> </div>'
-        html = html + ' <div id="collapse' + msg.key + '" class="collapse" aria-labelledby="heading' + msg.key + '" data-parent="#serach-julei"><div class="card-body">'
+        html = '<div class="julei_card">'
+        // html = html + '<div class="card-header" id="heading' + msg.key + '"> <h2 class="mb-0"><button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse' + msg.key + '" aria-expanded="false" aria-controls="collapse' + msg.key + '">  (' + msg.data.length + ' )' + msg.sumy[0] + '  </button> </h2> </div>'
+        // html = html + ' <div id="collapse' + msg.key + '" class="collapse" aria-labelledby="heading' + msg.key + '" data-parent="#serach-julei"><div class="card-body">'
         $.each(msg.data, function (index, value) {
           // content_list
-          html = html + '<p data-text="' + value + '"  class="sent plus_menu"> ' + value + '</p>'
+          html = html + '<p id="'+  value +'" data-text="' + value + '"  class="sent plus_menu '+  value +'"> ' + value + '</p>'
           // if ( msg.data.sumy.indexOf(value) !=-1) {
           // html = html + '<p class="it"> ' + value + '</p>'
           // }else{
@@ -1006,7 +1027,7 @@ p.sent_pop.clicked {
         })
 
         // html=html +'</div><div class="highlights">'+ msg.data.content+ '</div>'
-        html = html + '</div></div></div>'
+        html = html + '</div>'
         $('#serach-julei').append(html)
         // // $('#serach-rs').prepend(html)
       })
@@ -1150,6 +1171,44 @@ auto_save()
 // $(this).addClass("used").removeClass("sent")
 
 })
+
+
+$(document).on('click', '#serach-julei .sent', function () {
+
+
+var text = $(this).data('text');
+
+var miaoshu_id="#miaoshu_"+text
+
+$('#pop-box .modal-body').html("空白内容")
+      $('#pop-box').modal('show')
+      var searchText=$(miaoshu_id).data('text')
+      var content_id=$(miaoshu_id).data('id')
+      var html =$("#"+content_id+" .collapse .highlights").html()
+      var h2 =$("#"+content_id+" .collapse h4").html()
+      $('#pop-box .modal-header h2').html(h2)
+      $('#pop-box .modal-body').html(html)
+
+      // var regExp = new RegExp("(" + searchText + ")", 'g');
+      // var newHtml = html.replace(regExp, '<span class="m_result" style="background:yellow;color:red;">' + searchText + '</span>');
+      console.log("searchText",searchText)
+      var newHtml = keywordscolorful(html, searchText)
+      console.log("newHtml",newHtml)
+      $('#pop-box .modal-body').html(newHtml)
+  $(this).addClass("used")
+
+
+
+
+
+
+})
+
+
+
+
+
+
     $(document).on('click', '.sent_add', function () {
 
 
