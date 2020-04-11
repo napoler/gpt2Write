@@ -13,6 +13,19 @@ print(DB.name)
 # Collection(Database(MongoClient('localhost', 27017), u'test'), u'my_collection')
 # print(DB.my_collection.insert_one({"x": 10}).inserted_id)
 
+from tkitMarker_bert import Marker
+import tkitNextSents
+
+NextS=tkitNextSents.NextSents("tkitfiles/bertNext/")
+NextS.load_model()
+
+Pred_Marker=Marker(model_path="./tkitfiles/miaoshu")
+Pred_Marker.load_model()
+
+
+
+
+
 Word2vec_model='/mnt/data/dev/github/w2vec关键词抽取/keyextract_word2vec/model/word2vec_demo.model'
 Word2vec_model_WV='/mnt/data/dev/github/w2vec关键词抽取/keyextract_word2vec/model/word2vec_demo.vector.model'
 Word2vec_model_save_fast='/mnt/data/dev/github/w2vec关键词抽取/keyextract_word2vec/model/word2vec_demo.vector.fast.model'

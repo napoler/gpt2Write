@@ -20,6 +20,11 @@
   <link rel="stylesheet" href="/static/css/editormd.css" />
   <!-- <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" /> -->
   <style>
+    header h1 {
+    background: #0e0e0e;
+    padding: 2px 20px;
+    color: #fff;
+}
     div#plist {
 
       background: #fff;
@@ -75,7 +80,10 @@
       margin: 10px 149px;
 
     }
-
+    div#pop-box {
+    padding: 20px;
+    background: #8c8c8c;
+}
     .b {
       color: firebrick
     }
@@ -150,7 +158,10 @@
       margin: 2px;
       padding: 5px 10px;
     }
-
+.used{
+  background: #c2fb68;
+  margin: 2px;
+}
     .highlights {
     padding: 20px;
 }
@@ -165,11 +176,13 @@ ul.context-menu-list.context-menu-root {
 div#mark_warp {
   position: fixed;
     bottom: 10px;
-    width: 400px;
+ 
+    width: 490px;
     background: #ffc107;
-    padding: 20px;
-    max-height: 700px;
+    padding: 10px;
+    margin-bottom: -10px !important;
     z-index: 9999;
+    overflow: hidden;
 }
 #mark_header {
     width: auto;
@@ -181,6 +194,11 @@ ul#mark {
     list-style: none;
     overflow: auto;
     max-height: 650px;
+    height: 0;
+}
+ul#mark.mark_inited {
+
+    height: 650px;
 }
 
 ul#mark li {
@@ -189,6 +207,33 @@ ul#mark li {
     background: #ffce3c;
     margin-top: 5px;
 }
+div#search_sm {
+    position: fixed;
+    bottom: 0;
+    width: 750px;
+    z-index: 99999;
+    background: #ccc;
+    padding: 13px;
+    margin: 0 !important;
+}
+ul#mark li.sent_add.used {
+    background: #d1ffbe;
+}
+
+div#miaoshu-rs .sent {
+    display: inline-block;
+}
+p.sent_pop {
+    display: inline-block;
+    background: #f5f5f5;
+    margin: 2px;
+    padding: 2px;
+    border: 2px solid #afa6a6;
+}
+p.sent_pop.clicked {
+    background: #ffc107;
+}
+
   </style>
 </head>
 
@@ -198,7 +243,7 @@ ul#mark li {
 
     <div class="container-fluid">
       <header>
-        <h1>Ai edit</h1>
+        <h1>Ai Editor</h1>
       </header>
       <div class="row">
 
@@ -245,9 +290,25 @@ ul#mark li {
             <textarea style="display:none;"></textarea>
           </div>
           <p class='tips'>按下Tab键获取人工智能建议</p>
-          <input id="serachkeywords_input" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
-          <button id='serachkeywords' type="submit" class="btn btn-primary">搜索</button>
 
+          <div id="search_sm" class="input-group ">
+            <input id="ner_input" type="text" class="form-control" id="inlineFormInputName" placeholder="实体">
+         
+
+            <input id="serachkeywords_input" type="text" class="form-control" id="inlineFormInputName" placeholder="关键词">
+         
+
+            <div class="input-group-append">
+ 
+              <button id='serachkeywords' type="submit" class="btn btn-primary  btn-outline-secondary">搜索</button>
+            </div>
+            
+          </div>
+
+ 
+          <div id="miaoshu-rs" class="plist1">
+          </div>
+          
           <!-- <div id="serach-julei"  class="plist1">
           </div> -->
           <div id="serach-rs" class="plist1 accordion">
@@ -533,15 +594,24 @@ ul#mark li {
         // } else {
         //   // return 
         // }
-
+        
         // 判断是不是被选中
         if ($('#customSwitch_zhaiyao').get(0).checked) {
-          socket.emit('获取摘要', { data: text.slice(-50) });
+          var ner_input = $("#ner_input").val();
+          socket.emit('获取摘要', { data: text.slice(-50),ner_input:ner_input });
+          
         } else {
           // return 
         }
+        // 判断是不是被选中
+        // if ($('#customSwitch_guanjianci').get(0).checked) {
+        //   socket.emit('关键词探索', { data: text.slice(-50) });
+          
+        // } else {
+        //   // return 
+        // }
 
-
+        $('#miaoshu-rs').prepend('</br></br>')
         $("#serach-rs").html("")
         $('#serach-sent ol').html('')
         $('#plist_next ol').html('')
@@ -834,12 +904,12 @@ ul#mark li {
     $(document).ready(function () {
       socket.on('预测摘要', function (msg) {
         console.log(msg)
+        timestamp = (new Date()).valueOf();
 
 
-
-        html = '<div class="card">'
-        html = html + '<div class="card-header" id="c_heading' + msg.key + '"> <h2 class="mb-0"><button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#c_collapse' + msg.key + '" aria-expanded="false" aria-controls="c_collapse' + msg.key + '"> ' + msg.data.title + '  </button> </h2> </div>'
-        html = html + ' <div id="c_collapse' + msg.key + '" class="collapse" aria-labelledby="c_heading' + msg.key + '" data-parent="#serach-julei"><div class="card-body">'
+        html = '<div id="content_'+timestamp+'" class="card">'
+        html = html + '<div class="card-header" id="c_heading' + timestamp + '"> <h2 class="mb-0"><button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#c_collapse' + timestamp + '" aria-expanded="false" aria-controls="c_collapse' + timestamp + '"> ' + msg.data.title + '  </button> </h2> </div>'
+        html = html + ' <div id="c_collapse' + timestamp + '" class="collapse" aria-labelledby="c_heading' + timestamp + '" data-parent="#serach-julei"><div class="card-body">'
         // $.each(msg.data, function (index, value) {
         //   // content_list
         //   html = html + '<p data-text="' + value + '"  class="sent"> ' + value + '</p>'
@@ -852,13 +922,40 @@ ul#mark li {
 
 
         html = html+'<h4  data-text="## ' + msg.data.title + '"  class="sent">##  ' + msg.data.title + '</h4>'
-
-        html = html+'<h2>摘要</h2>'
-        $.each(msg.data.sumy, function (index, value) {
+        html = html+'<h2>描述</h2>'
+        $.each(msg.data.description, function (index, value) {
           // content_list
           html = html + '<p data-text="' + value + '"  class="sent"> ' + value + '</p>'
 
         })
+
+
+
+        var miaoshu  = ''
+        $.each(msg.data.description, function (index, value) {
+          // content_list
+          miaoshu = miaoshu + '<p data-text="' + value + '"  data-id="content_'+timestamp+'" class="sent_pop plus_menu"> ' + value + '</p>'
+
+        })
+        var ner_input=$("#ner_input").val()
+        // miaoshu = miaoshu + '<h2  class="ms"> ' + ner_input + '</h2>'
+        $('#miaoshu-rs').prepend(miaoshu)
+
+
+
+        html = html+'<h2>摘要</h2>'
+        $.each(msg.data.sumy, function (index, value) {
+          // content_list
+          html = html + '<p data-text="' + value + '"  class="sent plus_menu"> ' + value + '</p>'
+
+        })
+        html = html+'<h2>关键短语</h2>'
+        $.each(msg.data.seq, function (index, value) {
+          // content_list
+          html = html + '<p data-text="' + value.text + '"  class="sent plus_menu"> ' + value.text + '</p>'
+
+        })
+
         html = html+'<h2>原文</h2>'
 
         // content_list
@@ -867,9 +964,9 @@ ul#mark li {
           // content_list
           if(msg.data.sumy.indexOf(value) > -1){
             //则包含该元素
-            content = content + '<p data-text="' + value + '"  class="sent y"> ' + value + '</p>'
+            content = content + '<p data-text="' + value + '"  class="sent y plus_menu"> ' + value + '</p>'
           }else{
-            content = content + '<p data-text="' + value + '"  class="sent n"> ' + value + '</p>'
+            content = content + '<p data-text="' + value + '"  class="sent n plus_menu"> ' + value + '</p>'
           }
 
 
@@ -900,7 +997,7 @@ ul#mark li {
         html = html + ' <div id="collapse' + msg.key + '" class="collapse" aria-labelledby="heading' + msg.key + '" data-parent="#serach-julei"><div class="card-body">'
         $.each(msg.data, function (index, value) {
           // content_list
-          html = html + '<p data-text="' + value + '"  class="sent"> ' + value + '</p>'
+          html = html + '<p data-text="' + value + '"  class="sent plus_menu"> ' + value + '</p>'
           // if ( msg.data.sumy.indexOf(value) !=-1) {
           // html = html + '<p class="it"> ' + value + '</p>'
           // }else{
@@ -922,7 +1019,7 @@ ul#mark li {
         // <h4 class="it">' + msg.data.title + '</h4>
         // html=html +'<div class="highlights">'+ msg.data.highlights+ '</div>'
         // html=html +'<li class="sent it">'+ msg.data.content+ '</li>'
-        html = html + '<li data-text="' + msg.data.content + '" class="sent it">' + msg.data.content + '</li>'
+        html = html + '<li data-text="' + msg.data.content + '" class="sent it plus_menu">' + msg.data.content + '</li>'
         // content
 
         // html=html + '</li>'
@@ -1011,6 +1108,48 @@ ul#mark li {
 
 
     })
+
+    // 匹配颜色高亮
+    function keywordscolorful(str, key){
+      console.log("替换")
+        var reg = new RegExp("(" + key + ")", "g");
+        // var newstr = str.replace(reg, "<font style='background:#ff0;'>$1</font>");
+        var newstr = str.replace(reg, "<span class='m_result' style='background:yellow;color:red;''>" + key + "</span>");
+        
+        return newstr;
+    }
+
+    $(document).on('click', '.sent_pop', function () {
+      $(this).addClass("clicked")
+      $('#pop-box .modal-body').html("空白内容")
+      $('#pop-box').modal('show')
+      var searchText=$(this).data('text')
+      var content_id=$(this).data('id')
+      var html =$("#"+content_id+" .collapse .highlights").html()
+      var h2 =$("#"+content_id+" .collapse h4").html()
+      $('#pop-box .modal-header h2').html(h2)
+      $('#pop-box .modal-body').html(html)
+
+      // var regExp = new RegExp("(" + searchText + ")", 'g');
+      // var newHtml = html.replace(regExp, '<span class="m_result" style="background:yellow;color:red;">' + searchText + '</span>');
+      console.log("searchText",searchText)
+      var newHtml = keywordscolorful(html, searchText)
+      console.log("newHtml",newHtml)
+      $('#pop-box .modal-body').html(newHtml)
+
+
+    })
+
+    $(document).on('dblclick', '.sent', function () {
+// var text = $(this).data('text');
+var text = $(this).text();
+// 插入
+TEditormd.insertValue("\n"+text);
+$(this).addClass("used")
+auto_save()
+// $(this).addClass("used").removeClass("sent")
+
+})
     $(document).on('click', '.sent_add', function () {
 
 
@@ -1022,7 +1161,8 @@ ul#mark li {
       // 替换选中
       // TEditormd.replaceSelection(text+"");
       // TEditormd.focus();
-
+      $(this).addClass("used")
+      auto_save()
     })
 
 //     $(document).on('click', '.addmark', function () {
@@ -1086,7 +1226,8 @@ ul#mark li {
 
       // 判断是不是被选中
       if ($('#customSwitch_zhaiyao').get(0).checked) {
-        socket.emit('获取摘要', { data: $("#serachkeywords_input").val() });
+        var ner_input = $("#ner_input").val();
+        socket.emit('获取摘要', { data: $("#serachkeywords_input").val(),ner_input:ner_input });
       } else {
         // return 
       }
@@ -1094,7 +1235,7 @@ ul#mark li {
 
 
 
-
+      $('#miaoshu-rs').prepend('</br></br>')
       $("#serach-rs").html("")
       $('#serach-sent ol').html('')
       $('#plist_next ol').html('')
@@ -1240,6 +1381,8 @@ ul#mark li {
       $('#settings-box').modal('hide')
     })
 
+
+
     function auto_save() {
       console.log("自动保存")
       var text = TEditormd.getValue()
@@ -1301,7 +1444,7 @@ ul#mark li {
   
     $(function() {
         $.contextMenu({
-            selector: '.sent', 
+            selector: '.plus_menu', 
             callback: function(key, options) {
                 // var m = "clicked: " + key;
                 // window.console && console.log(m) || alert(m); 
@@ -1311,10 +1454,19 @@ ul#mark li {
                 switch(key) {
                   case "addmark":
                   var text=$(this).text()
+                    $(this).addClass("used")
                     addmark(text)
                     // code block
                     break;
-                  case y:
+                  case 'search':
+                  var text=$(this).text()
+                  $("#serach-rs").append('<div class="card"><h2>进一步搜索：'+text+'</h2></div>')
+                  $("#miaoshu-rs").prepend('</br></br>')
+                    var ner_input=$("#ner_input").val()
+                    socket.emit('获取摘要', { data: text,ner_input:ner_input });
+                   $("#ner_input").val(text)
+                    
+
                     // code block
                     break;
                   default:
@@ -1324,7 +1476,7 @@ ul#mark li {
             },
             items: {
               "addmark": {name: "addmark", icon: "copy"},
-            
+              "search": {name: "search", icon: "search"},
                 "sep1": "---------",
                 "quit": {name: "Quit", icon: function(){
                     return 'context-menu-icon context-menu-icon-quit';
@@ -1332,7 +1484,7 @@ ul#mark li {
             }
         });
   addmark(null)
-        function addmark(text){
+  function addmark(text){
     
         console.log("mark",text)
        
@@ -1377,7 +1529,8 @@ ul#mark li {
         $('#mark_header').on('click', function(e){
             // console.log('clicked', this);
             // window.console
-          $("#mark").toggle();
+            
+          $("#mark").addClass("mark_inited").toggle();
         })    
     });
   
@@ -1472,6 +1625,41 @@ ul#mark li {
 
       </div>
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pop-box" class="pop_tools modal">
+      <div class="modal-header">
+        <h2></h2>
+        <a class="close" data-dismiss="modal">×</a>
+
+      </div>
+      <div class="modal-body">
+ 
+  
+
+      </div>
+      <div class="modal-footer">
+        <button id="popclose" type="button" class="btn btn-default pop close">关闭</button>
+
+      </div>
+    </div>
+
+
+
+
+
+
+
 
   </div>
 

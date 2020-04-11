@@ -16,8 +16,8 @@ import tkitMarker,tkitDb,tkitText
 import os
 from fun import *
 from libs import *
-import tkitNextSents
 
+import torch
 from sumy.parsers.html import HtmlParser
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
@@ -30,7 +30,7 @@ from sumy.utils import get_stop_words
 
 from albertk import *
 
-
+# from tkitMarker_bert import Marker
 
 from config import *
 import gc
@@ -932,8 +932,7 @@ def get_next_text(message):
     # li=ns.auto_pre_one(text_a,text)
     # for it in li[:20]:
     #     emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
-    ns=tkitNextSents.NextSents("tkitfiles/bertNext/")
-    ns.load_model()
+
     # pone=ns.pre_one(text_a,text_b)
     # print("预测单条结果",pone)
     tt=tkitText.Text()
@@ -941,9 +940,10 @@ def get_next_text(message):
     # print("sents",sents[-1])
     # exit()
     #从文本中计算符合下一句的句子
-    p=ns.pre_from_text(sents[-1],text)
+    p=NextS.pre_from_text(sents[-1],text)
     for it in p[:20]:
         emit('Ai下一句', {'state': 'success','step':'next_sent','data':it})
+    # del ns
 @socketio.on('停止草稿', namespace='/tapi')
 def get_autonext_stop_text(message):
     set_var("autonext","True")
@@ -966,8 +966,8 @@ def get_autonext_text(message):
     #     # text=text+item.title+"\n"
     #     text=text+item.content+"\n"
      
-    ns=tkitNextSents.NextSents("tkitfiles/bertNext/")
-    ns.load_model()
+    # ns=tkitNextSents.NextSents("tkitfiles/bertNext/")
+    # ns.load_model()
     # pone=ns.pre_one(text_a,text_b)
     # print("预测单条结果",pone)
     tt=tkitText.Text()
@@ -985,7 +985,7 @@ def get_autonext_text(message):
         for  item in search_content(text_a[-100:]):
             text=text+item.content+"\n"
         sents=tt.sentence_segmentation_v1(text_a)
-        p=ns.pre_from_text(sents[-1],text)
+        p=NextS.pre_from_text(sents[-1],text)
         # print("预测结果",p)
         emit('Ai下一句', {'state': 'success','step':'next_sent','data':p})
         if len(p)>0 and p[0][0]>0.5:
@@ -1017,14 +1017,14 @@ def get_paixu_text(message):
     title = message.get('title')+"。"
 
     text=message.get('text')
-    ns=NextSent()
-    ns.load()    
+    # ns=NextSent()
+    # ns.load()    
     # li=ns.auto_sort(title,text,0.55)
     # print("li",li)
     # for li in ns.auto_pre(title,text,0.55): 
         # print(li)
     
-    for li in ns.auto_pre(title,text):
+    for li in NextS.auto_pre(title,text):
         emit('Ai排序', {'state': 'success','step':'ai_sort','data':li})
     # ns.__del__()
 
@@ -1043,11 +1043,14 @@ def get_sumy_text(message):
     keyword = message.get('data')
     tt= tkitText.Text()
     print(("keyword",keyword))
-
+    ner_input = message.get('ner_input')
+    if ner_input==None:
+        ner_input=keyword
+    # seq=get_keyseq(data['text'],num=30)
     i=0
     for  item in search_sent(keyword):
         # print(item)
-        l,s=get_sumy(item.content)
+        # l,s=get_sumy(item.content)
         # print(l)
         data={'content':item.content}
         # data['sumy']=l
@@ -1059,12 +1062,16 @@ def get_sumy_text(message):
     pass
 
     # 执行聚类操作
-    model,tokenizer=load_albert("tkitfiles/albert_tiny")
+    # model,tokenizer=load_albert("tkitfiles/albert_tiny")
     # klist=run_search_content(keyword,tokenizer,model,10)
     # klist=run_search_content_sk(keyword,tokenizer,model,10)
     # for k in klist.keys(): 
     #     # l,s=get_sumy("。".join(klist[k]))
     #     emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})
+    
+    # Marker(model_path="./tkitfiles/miaoshu")
+    # Mmodel,Mtokenizer=pred.load_model()
+    
 
     i=0
     text_list=[]
@@ -1074,34 +1081,77 @@ def get_sumy_text(message):
         # print(l,s)
         data={"title":item.title,'content':item.content}
         data['sumy']=l
-        # data['content_list']=tt.sentence_segmentation_v1(item.content)
-        ht0 = HarvestText()
-        num_paras=10
-        data['content_list']=ht0.cut_paragraphs(item.content, num_paras)
-        text_list=text_list+data['content_list']
 
+        try:
+            # pall=pred.pre(ner_input,item.content,Mmodel,Mtokenizer)
+            # pall=pre_one(ner_input,item.content)
+            # pre_one(ner_input,item.content)
+            pall=Pred_Marker.pre(ner_input,item.content)
+            # Mmodel.cpu()
+            # tmp=get_temp("pall")
+            # pall=tmp['value']
+            # pall=[]
+            pass
+        except:
+            pall=[]
+        # emit('预测描述', {'state': 'success','step':'marker','data':pall})
+
+        # ht0 = HarvestText()
+        # num_paras=10
+        # data['content_list']=ht0.cut_paragraphs(item.content, num_paras)
+        sens=tt.sentence_segmentation_v1(item.content)
+        data['content_list']=sens
+        data['seq']=[]
+
+        data['description']=pall
+        del pall
+        # try:
+        #     # seq=get_keyseq(item.title+'\n'+item.content,int(len(sens)*0.30))
+        #     # data['seq']=seq
+        #     pass
+        # except:
+        #     pass
+        text_list=text_list+data['content_list']
         emit('预测摘要', {'state': 'success','step':'sumy','key':i,'data':data})
         if i==50:
             break
         i=i+1
 
-    klist=kmeans_sk_content(text_list,tokenizer,model,20)
-    for k in klist.keys(): 
-    # l,s=get_sumy("。".join(klist[k]))
-        emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})  
-    pass
+    # klist=kmeans_sk_content(text_list,tokenizer,model,20)
+    # for k in klist.keys(): 
+    # # l,s=get_sumy("。".join(klist[k]))
+    #     emit('句子聚类', {'state': 'success','step':'kmeans','key':k,'sumy':l,'data':klist[k]})  
+    # pass
+    # torch.empty()
+    # del Mmodel
+    # del Mtokenizer
+    # del pred
+    gc.collect()
+    # del text_list
+    # del Mmodel
+    # del Mtokenizer  
 
-    response = requests.post(
-        'http://localhost:6800/schedule.json',
-        params={'keyword': keyword,'project':'default','spider':'kgbot',"url_type":'all'},
-        )
-    try:
-        DB.keywords.insert_one({"_id":keyword,'value':keyword})
-        print('添加关键词',keyword)
-    except :
-        pass
-    if response.status_code ==200:
-        print("提交进程",response.json())
+
+
+
+
+
+
+    # response = requests.post(
+    #     'http://localhost:6800/schedule.json',
+    #     params={'keyword': keyword,'project':'default','spider':'kgbot',"url_type":'all'},
+    #     )
+    # try:
+    #     DB.keywords.insert_one({"_id":keyword,'value':keyword})
+    #     print('添加关键词',keyword)
+    # except :
+    #     pass
+    # if response.status_code ==200:
+    #     print("提交进程",response.json())
+
+
+
+
 
     # response = requests.get(
     #     'http://0.0.0.0:6801/json/search_sent',

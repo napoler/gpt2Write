@@ -15,7 +15,7 @@ import re
 import argparse
 from random import choice
 from config import  *
-
+import time
 from sumy.parsers.html import HtmlParser
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
@@ -526,6 +526,44 @@ def data_pre_train_mongo_next_sent( data_path='data/data.json',train_path='data/
         f1.write("\n".join(sents)+"\n\n")
 
 
+
+def data_pre_train_mongo_text(train_path='data/train/' ):
+    """
+    构建文本数据将单篇文章一个txt文件
+    """
+ 
+    # tt=tkitText.Text()
+    #这里定义mongo数据
+    # client = pymongo.MongoClient("localhost", 27017)
+    # DB_kg_scrapy = client.kg_scrapy
+
+    # q={}
+    i=0
+    # content_pet
+    # for item in DB_kg_scrapy.kg_content.find(q):
+    time_path='0'
+    ttf=tkitFile.File()
+    for item in tqdm(DB.content_pet.find({})):
+        i=i+1
+        if i%10000==0:
+            ttf.mkdir(train_path+time_path)
+            time_path =str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        #     break
+        name= str(int(time.time()))+item['title'][:10]+".txt"
+        # file_path=os.path.join(train_path,name)
+        file_path=train_path+time_path+"/"+name
+        # print(file_path)
+        try:
+            with open(file_path,'w',encoding = 'utf-8') as f1:
+                f1.write(item['title']+"\n")
+                f1.write(item['content']+"\n")
+        except:
+            pass
+
+
+
+
+
 from harvesttext import HarvestText
 
 
@@ -923,6 +961,7 @@ def csv_data(file_path=''):
 def main():
     parser = argparse.ArgumentParser(usage="运行数据构建.", description="help info.")
     parser.add_argument("--do", type=str, default='data_pre_train_file',required=False, help="输入运行的类型  (csv_list（将csv文件转换成data.json）,data_pre_train_file(构建豫训练) )")
+    parser.add_argument("--path", type=str, default='data_train',required=False, help="输入输出路径")
     args = parser.parse_args()
     if args.do == 'csv_list':
         csv_list()
@@ -969,6 +1008,10 @@ def main():
         #构建下一句预测语句
         # python bulid_data.py --do data_pre_train_mongo_next_sent
         data_pre_train_mongo_next_sent()
+    elif  args.do=='data_pre_train_mongo_text':
+        #构建文本数据将单篇文章一个txt文件
+        # python bulid_data.py --do data_pre_train_mongo_text --path data/train
+        data_pre_train_mongo_text(args.path)
 
 if __name__ == '__main__':
     main()
