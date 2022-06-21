@@ -1,6 +1,6 @@
 pytorch-transformers==1.2.0
 torch==1.2.0
-numpy==1.17.4
+numpy==1.22.0
 tqdm==4.35.0
 sklearn
 keras
