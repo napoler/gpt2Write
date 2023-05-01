@@ -7,7 +7,7 @@ keras
 tb-nightly
 future
 thulac
-Flask==1.1.1
+Flask==2.3.2
 Flask-Limiter==1.1.0
 tkitText
 tkitDb
