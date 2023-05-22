@@ -1,6 +1,6 @@
 albertk==0.0.1.3
 textrank4zh==0.3
-requests==2.21.0
+requests==2.31.0
 jiagu==0.1.8
 jieba==0.39
 Flask_Limiter==1.1.0
