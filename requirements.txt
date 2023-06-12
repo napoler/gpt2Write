@@ -10,7 +10,7 @@ sumy==0.8.1
 elasticsearch_dsl==7.1.0
 pytorch_transformers==1.2.0
 pyltp==0.2.1
-transformers==2.8.0
+transformers==4.30.0
 sentencepiece==0.1.85
 Flask==1.1.1
 harvesttext==0.7.3
